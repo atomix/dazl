@@ -129,8 +129,8 @@ that can be constructed via functions in the `dazl` package:
 
 ```go
 log.Warnw("Something went wrong!", 
-	  dazl.String("user", user.Name), 
-	  dazl.Uint64("user-id", user.ID))
+    dazl.String("user", user.Name), 
+    dazl.Uint64("user-id", user.ID))
 ```
 
 Alternatively, you can create a structured logger with a fixed set of fields using the `WithFields` method:
@@ -467,7 +467,7 @@ func TestLogger(t *testing.T) {
         dazl.WithLevelKey("level"),
         dazl.WithNameEncoder(zapcore.FullNameEncoder),
         dazl.WithLevelEncoder(zapcore.CapitalLevelEncoder))
-	  assert.NoError(t, err)
+    assert.NoError(t, err)
     
     var log = dazl.GetLogger().WithOutputs(dazl.NewOutput(sink))
     
