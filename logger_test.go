@@ -28,7 +28,9 @@ func TestLoggerConfig(t *testing.T) {
 		WithNameKey("name"),
 		WithMessageKey("message"),
 		WithLevelKey("level"),
+		WithCallerKey("caller"),
 		WithNameEncoder(zapcore.FullNameEncoder),
+		WithCallerEncoder(zapcore.ShortCallerEncoder),
 		WithLevelEncoder(zapcore.CapitalLevelEncoder))
 	assert.NoError(t, err)
 	assert.NotNil(t, sink)
@@ -44,7 +46,7 @@ func TestLoggerConfig(t *testing.T) {
 	logger.Debug("should not be printed")
 	assert.Equal(t, "", buf.String())
 	logger.Infof("should be %s", "printed")
-	assert.Equal(t, "INFO\tshould be printed\n", buf.String())
+	assert.Equal(t, "INFO\tdazl/logger_test.go:48\tshould be printed\n", buf.String())
 
 	// The "test" logger should inherit the INFO level from the root logger
 	buf.Reset()
@@ -54,7 +56,7 @@ func TestLoggerConfig(t *testing.T) {
 	logger.Debugf("should %s be", "not")
 	assert.Equal(t, "", buf.String())
 	logger.Info("should be")
-	assert.Equal(t, "INFO\ttest\tshould be\t{\"printed\": true}\n", buf.String())
+	assert.Equal(t, "INFO\ttest\tdazl/logger_test.go:58\tshould be\t{\"printed\": true}\n", buf.String())
 
 	// The "test/1" logger should be configured with DEBUG level
 	buf.Reset()
@@ -62,9 +64,9 @@ func TestLoggerConfig(t *testing.T) {
 	assert.Equal(t, "test/1", logger.Name())
 	assert.Equal(t, DebugLevel, logger.Level())
 	logger.Debugw("should be", Bool("printed", true))
-	assert.Equal(t, "DEBUG\ttest/1\tshould be\t{\"printed\": true}\n", buf.String())
+	assert.Equal(t, "DEBUG\ttest/1\tdazl/logger_test.go:66\tshould be\t{\"printed\": true}\n", buf.String())
 	logger.Infow("should be", Bool("printed", true))
-	assert.Equal(t, "DEBUG\ttest/1\tshould be\t{\"printed\": true}\nINFO\ttest/1\tshould be\t{\"printed\": true}\n", buf.String())
+	assert.Equal(t, "DEBUG\ttest/1\tdazl/logger_test.go:66\tshould be\t{\"printed\": true}\nINFO\ttest/1\tdazl/logger_test.go:68\tshould be\t{\"printed\": true}\n", buf.String())
 
 	// The "test/1/2" logger should inherit the DEBUG level from "test/1"
 	buf.Reset()
@@ -72,9 +74,9 @@ func TestLoggerConfig(t *testing.T) {
 	assert.Equal(t, "test/1/2", logger.Name())
 	assert.Equal(t, DebugLevel, logger.Level())
 	logger.Debugw("printed", String("should", "be"))
-	assert.Equal(t, "DEBUG\ttest/1/2\tprinted\t{\"printed\": true, \"should\": \"be\"}\n", buf.String())
+	assert.Equal(t, "DEBUG\ttest/1/2\tdazl/logger_test.go:76\tprinted\t{\"printed\": true, \"should\": \"be\"}\n", buf.String())
 	logger.Infow("printed", String("should", "be"))
-	assert.Equal(t, "DEBUG\ttest/1/2\tprinted\t{\"printed\": true, \"should\": \"be\"}\nINFO\ttest/1/2\tprinted\t{\"printed\": true, \"should\": \"be\"}\n", buf.String())
+	assert.Equal(t, "DEBUG\ttest/1/2\tdazl/logger_test.go:76\tprinted\t{\"printed\": true, \"should\": \"be\"}\nINFO\ttest/1/2\tdazl/logger_test.go:78\tprinted\t{\"printed\": true, \"should\": \"be\"}\n", buf.String())
 
 	// The "test" logger should still inherit the INFO level from the root logger
 	buf.Reset()
@@ -84,7 +86,7 @@ func TestLoggerConfig(t *testing.T) {
 	logger.Debug("should not be printed")
 	assert.Equal(t, "", buf.String())
 	logger.Info("should be printed")
-	assert.Equal(t, "INFO\ttest\tshould be printed\n", buf.String())
+	assert.Equal(t, "INFO\ttest\tdazl/logger_test.go:88\tshould be printed\n", buf.String())
 
 	// The "test/2" logger should be configured with WARN level
 	buf.Reset()
@@ -96,7 +98,7 @@ func TestLoggerConfig(t *testing.T) {
 	logger.Infow("should not be", Bool("printed", true))
 	assert.Equal(t, "", buf.String())
 	logger.Warnw("should be printed", Int("times", 2))
-	assert.Equal(t, "WARN\ttest/2\tshould be printed\t{\"times\": 2}\n", buf.String())
+	assert.Equal(t, "WARN\ttest/2\tdazl/logger_test.go:100\tshould be printed\t{\"times\": 2}\n", buf.String())
 
 	// The "test/2/3" logger should be configured with INFO level
 	buf.Reset()
@@ -106,9 +108,9 @@ func TestLoggerConfig(t *testing.T) {
 	logger.Debug("should not be printed")
 	assert.Equal(t, "", buf.String())
 	logger.Infow("should be printed", Int("times", 2))
-	assert.Equal(t, "INFO\ttest/2/3\tshould be printed\t{\"times\": 2}\n", buf.String())
+	assert.Equal(t, "INFO\ttest/2/3\tdazl/logger_test.go:110\tshould be printed\t{\"times\": 2}\n", buf.String())
 	logger.Warn("should be printed twice")
-	assert.Equal(t, "INFO\ttest/2/3\tshould be printed\t{\"times\": 2}\nWARN\ttest/2/3\tshould be printed twice\n", buf.String())
+	assert.Equal(t, "INFO\ttest/2/3\tdazl/logger_test.go:110\tshould be printed\t{\"times\": 2}\nWARN\ttest/2/3\tdazl/logger_test.go:112\tshould be printed twice\n", buf.String())
 
 	// The "test/2/4" logger should inherit the WARN level from "test/2"
 	buf.Reset()
@@ -120,7 +122,7 @@ func TestLoggerConfig(t *testing.T) {
 	logger.Info("should not be printed")
 	assert.Equal(t, "", buf.String())
 	logger.Warn("should be printed twice")
-	assert.Equal(t, "WARN\ttest/2/4\tshould be printed twice\n", buf.String())
+	assert.Equal(t, "WARN\ttest/2/4\tdazl/logger_test.go:124\tshould be printed twice\n", buf.String())
 
 	// The "test/2" logger level should be changed to DEBUG
 	buf.Reset()
@@ -129,11 +131,11 @@ func TestLoggerConfig(t *testing.T) {
 	logger.SetLevel(DebugLevel)
 	assert.Equal(t, DebugLevel, logger.Level())
 	logger.Debugw("should be", Bool("printed", true))
-	assert.Equal(t, "DEBUG\ttest/2\tshould be\t{\"printed\": true}\n", buf.String())
+	assert.Equal(t, "DEBUG\ttest/2\tdazl/logger_test.go:133\tshould be\t{\"printed\": true}\n", buf.String())
 	logger.Infow("should be printed", Int("times", 2))
-	assert.Equal(t, "DEBUG\ttest/2\tshould be\t{\"printed\": true}\nINFO\ttest/2\tshould be printed\t{\"times\": 2}\n", buf.String())
+	assert.Equal(t, "DEBUG\ttest/2\tdazl/logger_test.go:133\tshould be\t{\"printed\": true}\nINFO\ttest/2\tdazl/logger_test.go:135\tshould be printed\t{\"times\": 2}\n", buf.String())
 	logger.Warn("should be printed twice")
-	assert.Equal(t, "DEBUG\ttest/2\tshould be\t{\"printed\": true}\nINFO\ttest/2\tshould be printed\t{\"times\": 2}\nWARN\ttest/2\tshould be printed twice\n", buf.String())
+	assert.Equal(t, "DEBUG\ttest/2\tdazl/logger_test.go:133\tshould be\t{\"printed\": true}\nINFO\ttest/2\tdazl/logger_test.go:135\tshould be printed\t{\"times\": 2}\nWARN\ttest/2\tdazl/logger_test.go:137\tshould be printed twice\n", buf.String())
 
 	// The "test/2/3" logger should not inherit the change to the "test/2" logger since its level has been explicitly set
 	buf.Reset()
@@ -143,9 +145,9 @@ func TestLoggerConfig(t *testing.T) {
 	logger.Debug("should not be printed")
 	assert.Equal(t, "", buf.String())
 	logger.Info("should be printed twice")
-	assert.Equal(t, "INFO\ttest/2/3\tshould be printed twice\n", buf.String())
+	assert.Equal(t, "INFO\ttest/2/3\tdazl/logger_test.go:147\tshould be printed twice\n", buf.String())
 	logger.Warn("should be printed twice")
-	assert.Equal(t, "INFO\ttest/2/3\tshould be printed twice\nWARN\ttest/2/3\tshould be printed twice\n", buf.String())
+	assert.Equal(t, "INFO\ttest/2/3\tdazl/logger_test.go:147\tshould be printed twice\nWARN\ttest/2/3\tdazl/logger_test.go:149\tshould be printed twice\n", buf.String())
 
 	// The "test/2/4" logger should inherit the change to the "test/2" logger since its level has not been explicitly set
 	// The "test/2/4" logger should not output DEBUG messages since the output level is explicitly set to WARN
@@ -154,11 +156,11 @@ func TestLoggerConfig(t *testing.T) {
 	assert.Equal(t, "test/2/4", logger.Name())
 	assert.Equal(t, DebugLevel, logger.Level())
 	logger.Debug("should be printed")
-	assert.Equal(t, "DEBUG\ttest/2/4\tshould be printed\n", buf.String())
+	assert.Equal(t, "DEBUG\ttest/2/4\tdazl/logger_test.go:158\tshould be printed\n", buf.String())
 	logger.Info("should be printed twice")
-	assert.Equal(t, "DEBUG\ttest/2/4\tshould be printed\nINFO\ttest/2/4\tshould be printed twice\n", buf.String())
+	assert.Equal(t, "DEBUG\ttest/2/4\tdazl/logger_test.go:158\tshould be printed\nINFO\ttest/2/4\tdazl/logger_test.go:160\tshould be printed twice\n", buf.String())
 	logger.Warn("should be printed twice")
-	assert.Equal(t, "DEBUG\ttest/2/4\tshould be printed\nINFO\ttest/2/4\tshould be printed twice\nWARN\ttest/2/4\tshould be printed twice\n", buf.String())
+	assert.Equal(t, "DEBUG\ttest/2/4\tdazl/logger_test.go:158\tshould be printed\nINFO\ttest/2/4\tdazl/logger_test.go:160\tshould be printed twice\nWARN\ttest/2/4\tdazl/logger_test.go:162\tshould be printed twice\n", buf.String())
 
 	// The "test/3" logger should be configured with INFO level
 	// The "test/3" logger should write to multiple outputs
@@ -169,9 +171,9 @@ func TestLoggerConfig(t *testing.T) {
 	logger.Debug("should not be printed")
 	assert.Equal(t, "", buf.String())
 	logger.Info("should be printed")
-	assert.Equal(t, "INFO\ttest/3\tshould be printed\n", buf.String())
+	assert.Equal(t, "INFO\ttest/3\tdazl/logger_test.go:173\tshould be printed\n", buf.String())
 	logger.Warn("should be printed twice")
-	assert.Equal(t, "INFO\ttest/3\tshould be printed\nWARN\ttest/3\tshould be printed twice\n", buf.String())
+	assert.Equal(t, "INFO\ttest/3\tdazl/logger_test.go:173\tshould be printed\nWARN\ttest/3\tdazl/logger_test.go:175\tshould be printed twice\n", buf.String())
 
 	// The "test/3/4" logger should inherit INFO level from "test/3"
 	// The "test/3/4" logger should inherit multiple outputs from "test/3"
@@ -182,9 +184,9 @@ func TestLoggerConfig(t *testing.T) {
 	logger.Debug("should not be printed")
 	assert.Equal(t, "", buf.String())
 	logger.Info("should be printed")
-	assert.Equal(t, "INFO\ttest/3/4\tshould be printed\n", buf.String())
+	assert.Equal(t, "INFO\ttest/3/4\tdazl/logger_test.go:186\tshould be printed\n", buf.String())
 	logger.Warn("should be printed twice")
-	assert.Equal(t, "INFO\ttest/3/4\tshould be printed\nWARN\ttest/3/4\tshould be printed twice\n", buf.String())
+	assert.Equal(t, "INFO\ttest/3/4\tdazl/logger_test.go:186\tshould be printed\nWARN\ttest/3/4\tdazl/logger_test.go:188\tshould be printed twice\n", buf.String())
 
 	//logger = GetLogger("test/kafka")
 	//assert.Equal(t, InfoLevel, logger.Level())
