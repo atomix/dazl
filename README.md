@@ -8,7 +8,7 @@ SPDX-License-Identifier: Apache-2.0
 [![Docs](https://pkg.go.dev/badge/github.com/atomix/dazl)](https://pkg.go.dev/github.com/atomix/dazl)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Build](https://img.shields.io/github/actions/workflow/status/atomix/dazl/test.yml)](https://github.com/atomix/dazl/actions/workflows/test.yml)
-[![Coverage](https://codecov.io/gh/atomix/dazl/branch/main/graph/badge.svg?token=tNKcOjlxLo)](https://codecov.io/gh/atomix/dazl)
+[![Coverage](https://codecov.io/gh/atomix/dazl/branch/master/graph/badge.svg?token=NTBMFA3GIN)](https://codecov.io/gh/atomix/dazl)
 
 ## Lightweight Java-style logging for Go
 ### Promotes flexible, configurable, testable, debuggable applications.
