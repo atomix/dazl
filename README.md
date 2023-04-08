@@ -15,7 +15,7 @@ SPDX-License-Identifier: Apache-2.0
 Dazl is not just another Go logging framework. We're not here to reinvent Go logging for the nth time. Dazl is logging
 facade inspired by similar frameworks in Java, like [slf4j](https://slf4j.org), which are widely used throghout the
 Java ecosystem to provide a common interface, configuration, and abstractions for all the most popular logging 
-libraries for the JVM. Dazl wraps [a logging library that already works](https://github.com/uber-go/zap), enriching 
+libraries for the JVM. Dazl wraps [Uber's zap logging library](https://github.com/uber-go/zap), enriching 
 it and the existing ecosystem with fine-grained logging controls and configuration files, making your applications 
 easier to configure and debug, both for you and your users.
 
