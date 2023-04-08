@@ -36,7 +36,10 @@ jobs:
             ${{ runner.os }}-go-
 
       - name: Run tests
-        run: go test ./...
+        run: go test -race -coverprofile=coverage.txt -covermode=atomic
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
 
   lint:
     runs-on: ubuntu-latest
