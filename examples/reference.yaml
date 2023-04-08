@@ -1,0 +1,99 @@
+# SPDX-FileCopyrightText: 2023-present Intel Corporation
+#
+# SPDX-License-Identifier: Apache-2.0
+
+# This file serves as a reference for configuration options supported by dazl.
+
+# 'sinks' is a set of named sinks for loggers to write to.
+# Each sink must have a 'path' and 'encoding'.
+# - 'path' is either 'stdout', 'stderr', a local file system path, or a remote URL for a configured zap sink.
+# - 'encoding' is either 'console' or 'json'
+sinks:
+  stdout:
+    path: stdout
+    encoding: console
+    levelEncoder: capitalColor
+  stderr:
+    path: stderr
+    encoding: console
+  file:
+    path: ./example.log
+    encoding: json
+    # Encoding options are supported by all sinks
+    levelEncoder: ""
+    messageKey: msg
+    levelKey: lvl
+    timeKey: ts
+    nameKey: pkg
+
+# 'rootLogger' is the root logger configuration
+# 'level' is the default log level for all loggers
+#   - debug
+#   - info
+#   - warn
+#   - error
+#   - fatal
+#   - panic
+# 'outputs' is a set of references to configured sinks to which to output log messages
+rootLogger:
+  level: debug
+  outputs:
+    stdout:
+      sink: stdout
+      level: info
+    file:
+      sink: file
+
+# The keys configure the field names to use for log metadata.
+messageKey: message
+levelKey: level
+timeKey: timestamp
+nameKey: logger
+callerKey: caller
+stacktraceKey: trace
+
+# Additional options for log outputs
+skipLineEnding: false
+lineEnding: ""
+
+# levelEncoder is the default encoder to use for log levels
+#
+# Options:
+# - capital (upper-case)
+# - capitalColor (upper-case color-coded)
+# - color (lower-case color-coded)
+# - "" (lower-case)
+levelEncoder: ""
+
+# timeEncoder is the default encoder to use for timestamps
+#
+# Options:
+# - rfc3339nano
+# - RFC3339Nano
+# - rfc3339
+# - RFC3339
+# - iso8601
+# - ISO8601
+# - millis
+# - nanos
+timeEncoder: ISO8601
+
+# durationEncoder is the default encoder to use for durations
+#
+# Options:
+# - string
+# - nanos
+# - ms
+durationEncoder: string
+
+# callerEncoder is the default encoder to use for the caller info
+#
+# Options:
+# - full
+callerEncoder: full
+
+# nameEncoder is the default encoder to use for the logger name
+#
+# Options:
+# - full
+nameEncoder: full

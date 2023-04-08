@@ -1,0 +1,69 @@
+# SPDX-FileCopyrightText: 2023-present Intel Corporation
+#
+# SPDX-License-Identifier: Apache-2.0
+
+# The sinks define named writers for log messages.
+sinks:
+  # Define a console formatted sink to write to stdout
+  stdout:
+    path: stdout
+    encoding: console
+    timeKey: timestamp
+    timeEncoder: ISO8601
+  # Define a console formatted sink to write to stderr
+  stderr:
+    path: stderr
+    encoding: console
+    timeKey: timestamp
+    timeEncoder: ISO8601
+  # Define a JSON formatted sink to write to a file
+  file:
+    path: ./example.log
+    encoding: json
+    messageKey: message
+    levelKey: level
+    timeKey: timestamp
+    nameKey: logger
+    nameEncoder: full
+    stacktraceKey: trace
+    timeEncoder: millis
+    durationEncoder: string
+
+# The rootLogger defines the default configuration for all loggers
+rootLogger:
+  level: info
+  outputs:
+    # Output all loggers to stdout with 'info' level
+    stdout:
+      sink: stdout
+    # Output all loggers to the file
+    file:
+      sink: file
+
+loggers:
+  github.com/atomix/atomix/controller:
+    # Increase controller logs to 'debug' level
+    level: debug
+    # Limit outputs to the 'stdout' sink to 'info' level
+    outputs:
+      stdout:
+        level: info
+  github.com/atomix/atomix/controller/pkg/utils:
+    # The utils package inherits the 'debug' level from the controller logger
+    # Decrease utility package loggers to 'error' level
+    level: error
+    outputs:
+      # Output error logs to 'stderr' sink
+      stderr:
+        sink: stderr
+      # Disable utility logs to 'stdout' and 'file' sinks
+      stdout:
+        level: fatal
+      file:
+        level: fatal
+  github.com/atomix/atomix/drivers:
+    # Decrease driver logs to 'warn' level
+    level: warn
+  github.com/atomix/atomix/stores:
+    # Decrease store logs to 'warn' level
+    level: warn

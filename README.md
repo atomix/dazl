@@ -9,13 +9,15 @@ SPDX-License-Identifier: Apache-2.0
 ![License](https://img.shields.io/github/license/atomix/dazl)
 [![Build](https://img.shields.io/github/actions/workflow/status/atomix/dazl/test.yml)](https://github.com/atomix/dazl/actions/workflows/test.yml)
 
-## A lightweight hierarchical logging framework for Go
+## Lightweight Java-style logging for Go
 ### Promotes flexible, configurable, testable, debuggable applications.
 
-Dazl is not just another Go logging framework. We're not here to reinvent Go logging for the nth time. Instead,
-dazl wraps [a logging library that already works](https://github.com/uber-go/zap), enriching it and the existing
-ecosystem with fine-grained logging controls and configuration files, making your applications easier to configure 
-and debug, both for you and your users.
+Dazl is not just another Go logging framework. We're not here to reinvent Go logging for the nth time. Dazl is logging
+facade inspired by similar frameworks in Java, like [slf4j](https://slf4j.org), which are widely used throghout the
+Java ecosystem to provide a common interface, configuration, and abstractions for all the most popular logging 
+libraries for the JVM. Dazl wraps [a logging library that already works](https://github.com/uber-go/zap), enriching 
+it and the existing ecosystem with fine-grained logging controls and configuration files, making your applications 
+easier to configure and debug, both for you and your users.
 
 ### A brief history
 
@@ -201,7 +203,7 @@ Each sink must be keyed by a unique name. This is used to reference sinks in [ou
 sink must specify a `path` to write logs. Paths are URLs indicating the sink target (with a couple exceptions):
 * `stdout` - write to stdout
 * `stderr` - write to stderr
-* `file://...` - write to the given file
+* `./path/to/file.log` - write to the given file
 
 ### Encodings
 
@@ -286,7 +288,7 @@ sinks:
     path: stdout
     encoding: console
   file:
-    path: file://app.log
+    path: ./app.log
     encoding: json
 ```
 
@@ -381,7 +383,7 @@ sinks:
     encoding: console
     levelEncoder: capitalColor
   file:
-    path: file://app.log
+    path: ./app.log
     encoding: json
     levelEncoder: capital
 ```
@@ -409,7 +411,7 @@ sinks:
     encoding: console
     timeEncoder: rfc3339
   file:
-    path: file://app.log
+    path: ./app.log
     encoding: json
     timeEncoder: nanos
 ```
@@ -441,7 +443,7 @@ sinks:
     encoding: console
     durationEncoder: string
   file:
-    path: file://app.log
+    path: ./app.log
     encoding: json
     durationEncoder: nanos
 ```
