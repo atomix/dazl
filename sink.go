@@ -156,18 +156,17 @@ func newZapSink(config SinkConfig, writer zapcore.WriteSyncer) (Sink, error) {
 		return nil, err
 	}
 
-	zapLogger, err := zapConfig.Build(zap.AddCallerSkip(4))
+	logger, err := zapConfig.Build(
+		zap.AddCallerSkip(5),
+		zap.WrapCore(func(zapcore.Core) zapcore.Core {
+			return zapcore.NewCore(encoder, writer, zap.DebugLevel)
+		}))
 	if err != nil {
 		return nil, err
 	}
-	zapLogger = zapLogger.WithOptions(
-		zap.WrapCore(
-			func(zapcore.Core) zapcore.Core {
-				return zapcore.NewCore(encoder, writer, zap.DebugLevel)
-			}))
 	return &zapSink{
-		root:   zapLogger,
-		logger: zapLogger,
+		root:   logger,
+		logger: logger,
 	}, nil
 }
 
