@@ -23,6 +23,22 @@ used extensively in open source cloud software projects at [Intel](https://www.i
 operators the ability to easily configure logging for specific systems and subsystems, control logging targets and
 formats, and enable rapid debugging and analysis without the need to modify code.
 
+## User Guide
+
+* [Installation](#installation)
+* [Getting started](#getting-started)
+  * [Log levels](#log-levels)
+  * [Structured logging](#structured-logging)
+  * [Inheritance](#inheritance)
+* [Configuration](#configuration)
+  * [The root logger](#the-root-logger)
+  * [Setting up sinks](#sinks)
+    * [Encoding messages](#encodings)
+    * [Field-level encodings](#formatting-outputs)
+  * [Logger outputs](#outputs)
+    * [Output level filters](#output-levels)
+* [Writing unit tests](#writing-unit-tests)
+
 ## Installation
 
 To add dazl to your Go module:
@@ -31,15 +47,18 @@ To add dazl to your Go module:
 go get github.com/atomix/dazl
 ```
 
-## Usage
+## Getting started
 
-The typical usage of the framework is to create a `Logger` for each Go package:
+The typical usage of the framework is to create a `Logger` once at the top of each Go package:
 
 ```go
 var log = dazl.GetLogger()
 ```
 
-By default, the logger will be assigned the package path as its name.
+By default, loggers will be assigned the path of the package calling the `GetLogger()` function. So, if you 
+call `dazl.GetLogger()` from the `github.com/atomix/atomix/runtime` package, the logger will be assigned the
+name `github.com/atomix/atomix/runtime`. The naming strategy becomes important for 
+[logger configuration](#configuration) and, in particular, [inheritance](#inheritance).
 
 ```go
 const author = "kuujo"
@@ -55,18 +74,18 @@ func main() {
 2023-03-31T01:13:30.607Z	INFO	main.go:12	My name is Jordan Halterman
 ```
 
-But a custom name can optionally be assigned to loggers:
+A custom name may also be assigned to loggers:
 
 ```go
-var log = dazl.GetLogger("github.com/my/project/test")
+var log = dazl.GetLogger("test")
 ```
 
 Logger names must be formatted in path format, with each element separated by a `/`. This format is used
-to establish a hierarchy for inheritence of logger configurations.
+to establish a hierarchy for [inheritence](#inheritance) of logger configurations.
 
-### Log levels
+## Log levels
 
-dazl supports a fairly standard set of log levels for loggers:
+Dazl supports a fairly standard set of log levels for loggers:
 
 * `debug`
 * `info`
@@ -96,7 +115,37 @@ fields for each log level:
 * `Warnw(msg string, fields ...Field)`
 * ...
 
-### Inheritance
+## Structured logging
+
+Structured logging is supported for the JSON [encoding](#encodings), and JSON fields are configurable via
+the `Logger` API.
+
+The simplest way to add fields to your structured logs is to call one of the `*w` methods on the `Logger` interface.
+These methods accept an arbitrary number of `...Field`s to write to the logs. Fields are typed and named values
+that can be constructed via functions in the `dazl` package:
+
+```go
+log.Warnw("Something went wrong!", 
+	  dazl.String("user", user.Name), 
+	  dazl.Uint64("user-id", user.ID))
+```
+
+Alternatively, you can create a structured logger with a fixed set of fields using the `WithFields` method:
+
+```go
+var log = dazl.GetLogger().WithFields(
+    dazl.String("user", user.Name),
+    dazl.Uint64("id", user.ID))
+log.Warn("Something went wrong!")
+```
+
+When the logger is output to a JSON encoded sink, the above code will log the fields as part of the JSON object:
+
+```
+{"timestamp":"2023-04-07T19:24:09-07:00","logger":"2/4","message":"Something went wrong!","user":"Jordan Halterman","id":5678}
+```
+
+## Inheritance
 
 The path-like format used for logger names is used to establish a hierarchy of loggers. The dazl configuration
 enables developers and their users to configure individual loggers at runtime. Log levels are inherited by
@@ -122,7 +171,7 @@ the logger hierarchy. For example, setting the `github.com/atomix/atomix/runtime
 level will change the loggers for all loggers in the `github.com/atomix/atomix/runtime/...` packages
 to the `debug` level.
 
-## Logging configuration
+## Configuration
 
 Loggers can be configured via a YAML configuration file. The configuration files may be in one of many
 locations on the file system:
@@ -134,17 +183,6 @@ locations on the file system:
 
 The configuration file contains a set of `loggers` which specifies the level and outputs of each logger,
 and `sinks` which specify where and how to write log messages.
-
-## The root logger
-
-The default logging configuration is configured via the `rootLogger` key:
-
-```yaml
-rootLogger:
-  level: info
-```
-
-All loggers inherit their default configuration from the root logger.
 
 ## Sinks
 
@@ -164,11 +202,46 @@ sink must specify a `path` to write logs. Paths are URLs indicating the sink tar
 * `stderr` - write to stderr
 * `file://...` - write to the given file
 
+### Encodings
+
 Logs will be written to the sink using the specified `endoding`:
 * `console` - plain text output suitable for human consumption
 * `json` - structured JSON logging suitable for machine consumption
 
 Sinks also support additional formatting options discussed in the [formatting](#formatting) section.
+
+## The root logger
+
+The default logging configuration is configured via the `rootLogger` key:
+
+```yaml
+rootLogger:
+  level: info
+```
+
+All loggers inherit their default configuration from the root logger. The root logger configuration should at
+least specify a minimum log `level` for all loggers, and at least one `outputs` to a [sink](#sinks).
+
+```yaml
+rootLogger:
+  level: info
+  outputs:
+    stdout:
+      sink: stdout
+```
+
+## Named loggers
+
+Once the `rootLogger` has been defined, all other loggers that are descendants of the root logger may be defined and 
+configured in the `loggers` section of the configuration file:
+
+```yaml
+loggers:
+  github.com/atomix/atomix/runtime:
+    level: info
+  github.com/atomix/atomix/sidecar:
+    level: warn
+```
 
 ## Outputs
 
@@ -216,9 +289,79 @@ sinks:
     encoding: json
 ```
 
-## Formatting
+### Output overrides
 
-As with the loggers, the format of the log outputs can be configured either globally or on a per-sink basis.
+Descendants may override their ancestor loggers' output configurations. This can be done by simply specifying the
+same output name. For example, to override the log level for the `rootLogger`'s `stdout` output:
+
+```yaml
+sinks:
+  # Define an stdout sink with console encoding
+  stdout:
+    path: stdout
+    encoding: console
+
+rootLogger:
+  level: info
+  outputs:
+    # Output the root logger to the stdout sink
+    stdout:
+      sink: stdout
+
+loggers:
+  github.com/atomix/atomix/runtime:
+    outputs:
+      # Filter outputs from this logger to the stdout sink to minimum of 'warn' level
+      stdout:
+        level: warn
+```
+
+## Formatting outputs
+
+As with the loggers, the format of the log outputs can be configured either globally or on a per-sink basis. In
+addition to the sinks and loggers, the top-level configuration has the following fields which act as global 
+settings for all the sinks and loggers:
+* `messageKey` - the key to which to write the log message in structured logs
+* `levelKey` - the key to which to write the log level in structured logs
+* `timeKey` - the key to which to write the timestamp in structured logs
+* `nameKey` - the key to which to write the logger name in structured logs
+* `callerKey` - the key to which to write the caller in structured logs
+* `stacktraceKey` - the key to which to write the stack trace in structured logs
+* `skipLineEnding` - whether to skip the line endings in outputs
+* `lineEnding` - the line ending to use in outputs
+* `levelEncoder` - the [level encoder](#formatting-log-levels) to use for all logs
+* `timeEncoder` - the [time encoder](#formatting-timestamps) to use for all logs
+* `durationEncoder` - the [duration encoder](#formatting-durations) to use for all logs
+* `callerEncoder` - the encoder to use to encode the caller info in log outputs
+* `nameEncoder` - the encoder to use to encode the logger name in log outputs
+
+By default, the following values are set:
+
+```yaml
+messageKey: message
+levelKey: level
+timeKey: timestamp
+nameKey: logger
+```
+
+The above fields can also be configured for each individual sink, if necessary.
+
+```yaml
+sinks:
+  stdout:
+    path: stdout
+    encoding: console
+    levelEncoder: capitalColor
+```
+
+To include the [log level](#log-levels), [logger names](#named-loggers), [timestamps](#formatting-timestamps), and
+other fields in the log output, you must configure the encoders for those fields:
+
+```yaml
+levelEncoder: capital
+nameEncoder: full
+timeEncoder: rfc3339
+```
 
 ### Formatting log levels
 
