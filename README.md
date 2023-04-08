@@ -10,7 +10,6 @@ SPDX-License-Identifier: Apache-2.0
 [![Docs](https://pkg.go.dev/badge/github.com/atomix/dazl)](https://pkg.go.dev/github.com/atomix/dazl)
 ![License](https://img.shields.io/github/license/atomix/dazl)
 [![Build](https://img.shields.io/github/actions/workflow/status/atomix/dazl/test.yml)](https://github.com/atomix/dazl/actions/workflows/test.yml)
-[![Coverage](https://codecov.io/gh/atomix/dazl/branch/master/graph/badge.svg)](https://codecov.io/gh/atomix/dazl)
 
 dazl is a lightweight wrapper around [zap](https://github.com/uber-go/zap) loggers that adds a logger hierarchy
 with log level inheritence to enable fine-grained control and configuration of log levels, encoding, and formats.
