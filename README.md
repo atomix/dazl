@@ -11,8 +11,17 @@ SPDX-License-Identifier: Apache-2.0
 ![License](https://img.shields.io/github/license/atomix/dazl)
 [![Build](https://img.shields.io/github/actions/workflow/status/atomix/dazl/test.yml)](https://github.com/atomix/dazl/actions/workflows/test.yml)
 
-dazl is a lightweight wrapper around [zap](https://github.com/uber-go/zap) loggers that adds a logger hierarchy
-with log level inheritence to enable fine-grained control and configuration of log levels, encoding, and formats.
+Dazl is not just another Go logging framework. We're not here to reinvent Go logging for the nth time. Instead,
+dazl wraps [a logging library that already works](https://github.com/uber-go/zap), enriching it and the existing
+ecosystem with fine-grained logging controls and configuration files, making your applications easier to configure 
+and debug, both for you and your users.
+
+### A brief history
+
+This framework was originally developed at the [Open Networking Foundation](https://opennetworking.org) and is still 
+used extensively in open source cloud software projects at [Intel](https://www.intel.com), providing users and
+operators the ability to easily configure logging for specific systems and subsystems, control logging targets and
+formats, and enable rapid debugging and analysis without the need to modify code.
 
 ## Installation
 
