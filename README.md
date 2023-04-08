@@ -35,8 +35,8 @@ formats, and enable rapid debugging and analysis without the need to modify code
   * [Setting up sinks](#sinks)
     * [Encoding messages](#encodings)
     * [Field-level encodings](#formatting-outputs)
-  * [Logger outputs](#outputs)
-    * [Output level filters](#output-levels)
+  * [Outputting to sinks](#outputs)
+    * [Level filters](#output-levels)
 * [Writing unit tests](#writing-unit-tests)
 
 ## Installation
