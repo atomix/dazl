@@ -5,11 +5,12 @@ SPDX-License-Identifier: Apache-2.0
 
 # dazl
 
-## A simple Go framework for granular logging controls
-
 [![Docs](https://pkg.go.dev/badge/github.com/atomix/dazl)](https://pkg.go.dev/github.com/atomix/dazl)
 ![License](https://img.shields.io/github/license/atomix/dazl)
 [![Build](https://img.shields.io/github/actions/workflow/status/atomix/dazl/test.yml)](https://github.com/atomix/dazl/actions/workflows/test.yml)
+
+## A lightweight hierarchical logging framework for Go
+### Promotes flexible, configurable, testable, debuggable applications.
 
 Dazl is not just another Go logging framework. We're not here to reinvent Go logging for the nth time. Instead,
 dazl wraps [a logging library that already works](https://github.com/uber-go/zap), enriching it and the existing
