@@ -5,8 +5,6 @@
 package dazl
 
 import (
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 	"strings"
 )
 
@@ -40,26 +38,7 @@ func (l Level) String() string {
 	return [...]string{"", "debug", "info", "warn", "error", "fatal", "panic"}[l]
 }
 
-func levelToAtomicLevel(l Level) zap.AtomicLevel {
-	switch l {
-	case DebugLevel:
-		return zap.NewAtomicLevelAt(zapcore.DebugLevel)
-	case InfoLevel:
-		return zap.NewAtomicLevelAt(zapcore.InfoLevel)
-	case WarnLevel:
-		return zap.NewAtomicLevelAt(zapcore.WarnLevel)
-	case ErrorLevel:
-		return zap.NewAtomicLevelAt(zapcore.ErrorLevel)
-	case FatalLevel:
-		return zap.NewAtomicLevelAt(zapcore.FatalLevel)
-	case PanicLevel:
-		return zap.NewAtomicLevelAt(zapcore.PanicLevel)
-	default:
-		return zap.NewAtomicLevelAt(zapcore.FatalLevel)
-	}
-}
-
-func levelStringToLevel(l string) Level {
+func toLevel(l string) Level {
 	switch strings.ToLower(l) {
 	case DebugLevel.String():
 		return DebugLevel

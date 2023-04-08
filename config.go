@@ -142,7 +142,7 @@ type LoggerConfig struct {
 func (c LoggerConfig) GetLevel() Level {
 	level := c.Level
 	if level != nil {
-		return levelStringToLevel(*level)
+		return toLevel(*level)
 	}
 	return ErrorLevel
 }
@@ -181,7 +181,7 @@ func (c OutputConfig) GetSink() string {
 func (c OutputConfig) GetLevel() Level {
 	level := c.Level
 	if level != nil {
-		return levelStringToLevel(*level)
+		return toLevel(*level)
 	}
 	return DebugLevel
 }

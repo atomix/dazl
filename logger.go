@@ -59,7 +59,7 @@ func newLogger(config Config) (Logger, error) {
 		outputs: outputs,
 	}
 	if config.RootLogger.Level != nil {
-		logger.level.Store(int32(levelStringToLevel(*config.RootLogger.Level)))
+		logger.level.Store(int32(toLevel(*config.RootLogger.Level)))
 	}
 	return logger, nil
 }
@@ -336,9 +336,7 @@ func (l *zapLogger) getChild(name string) (*zapLogger, error) {
 
 func (l *zapLogger) WithOutputs(outputs ...Output) Logger {
 	allOutputs := make([]Output, 0, len(l.outputs)+len(outputs))
-	for _, output := range l.outputs {
-		allOutputs = append(allOutputs, output)
-	}
+	allOutputs = append(allOutputs, l.outputs...)
 	for _, output := range outputs {
 		allOutputs = append(allOutputs, output.getChild(l.path))
 	}

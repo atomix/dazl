@@ -4,10 +4,6 @@
 
 package dazl
 
-import (
-	"go.uber.org/zap"
-)
-
 // Output is a dazl output
 type Output interface {
 	Name() string
@@ -96,17 +92,6 @@ func (o *zapOutput) WithSkipCalls(calls int) Output {
 		sink:  o.sink.WithSkipCalls(calls),
 		level: o.level,
 	}
-}
-
-func (o *zapOutput) getZapFields(fields ...Field) []zap.Field {
-	if len(fields) == 0 {
-		return nil
-	}
-	zapFields := make([]zap.Field, len(fields))
-	for i, field := range fields {
-		zapFields[i] = field.getZapField()
-	}
-	return zapFields
 }
 
 func (o *zapOutput) Debug(msg string, fields ...Field) {
