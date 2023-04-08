@@ -12,13 +12,6 @@ import (
 	"path/filepath"
 )
 
-// SinkType is a type of sink
-type SinkType string
-
-func (t SinkType) String() string {
-	return string(t)
-}
-
 // Encoding is the encoding for a sink
 type Encoding string
 
