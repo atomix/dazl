@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-name: Run tests
+name: Run linters
 
 on:
   push:
@@ -16,7 +16,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  test:
+  lint:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -35,8 +35,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-
 
-      - name: Run tests
-        run: go test -race -coverprofile=coverage.txt -covermode=atomic
-
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
+      - name: Go lint
+        uses: golangci/golangci-lint-action@v3
+        with:
+          args: --timeout=5m
