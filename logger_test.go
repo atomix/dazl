@@ -319,3 +319,39 @@ func TestLoggerFuncs(t *testing.T) {
 	log.WithFields(fields...).Error("foo")
 	assert.Equal(t, fmt.Sprintf("error\tfoo\t%s\n", fieldsString), buf.String())
 }
+
+func TestSetLevel(t *testing.T) {
+	root := GetLogger("")
+	parent := GetLogger("parent")
+	child := parent.GetLogger("child")
+	clone := parent.WithOutputs()
+
+	assert.Equal(t, EmptyLevel, root.Level())
+	assert.Equal(t, EmptyLevel, parent.Level())
+	assert.Equal(t, EmptyLevel, child.Level())
+	assert.Equal(t, EmptyLevel, clone.Level())
+
+	SetLevel(ErrorLevel)
+	assert.Equal(t, ErrorLevel, root.Level())
+	assert.Equal(t, ErrorLevel, parent.Level())
+	assert.Equal(t, ErrorLevel, child.Level())
+	assert.Equal(t, ErrorLevel, clone.Level())
+
+	parent.SetLevel(WarnLevel)
+	assert.Equal(t, ErrorLevel, root.Level())
+	assert.Equal(t, WarnLevel, parent.Level())
+	assert.Equal(t, WarnLevel, child.Level())
+	assert.Equal(t, WarnLevel, clone.Level())
+
+	child.SetLevel(ErrorLevel)
+	assert.Equal(t, ErrorLevel, root.Level())
+	assert.Equal(t, WarnLevel, parent.Level())
+	assert.Equal(t, ErrorLevel, child.Level())
+	assert.Equal(t, WarnLevel, clone.Level())
+
+	clone.SetLevel(DebugLevel)
+	assert.Equal(t, ErrorLevel, root.Level())
+	assert.Equal(t, DebugLevel, parent.Level())
+	assert.Equal(t, ErrorLevel, child.Level())
+	assert.Equal(t, DebugLevel, clone.Level())
+}

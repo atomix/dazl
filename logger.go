@@ -65,18 +65,22 @@ func newLogger(config Config) (Logger, error) {
 }
 
 // GetLogger gets a logger by name
-func GetLogger(path ...string) Logger {
-	if len(path) > 1 {
+func GetLogger(paths ...string) Logger {
+	if len(paths) > 1 {
 		panic("number of paths must be 0 or 1")
 	}
-	if len(path) == 0 {
+	if len(paths) == 0 {
 		pkg, ok := getCallerPackage()
 		if !ok {
 			panic("could not retrieve logger package")
 		}
-		path = []string{pkg}
+		paths = []string{pkg}
 	}
-	return root.GetLogger(path[0])
+	path := paths[0]
+	if path == "" {
+		return root
+	}
+	return root.GetLogger(path)
 }
 
 // getCallerPackage gets the package name of the calling function'ss caller
