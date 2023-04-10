@@ -12,14 +12,12 @@ SPDX-License-Identifier: Apache-2.0
 [![codecov](https://codecov.io/gh/atomix/dazl/branch/master/graph/badge.svg?token=NTBMFA3GIN)](https://codecov.io/gh/atomix/dazl)
 
 ## Lightweight Java-style logging for Go
-### Promotes flexible, configurable, testable, debuggable applications.
 
-Dazl is not just another Go logging framework. We're not here to reinvent Go logging for the nth time. Dazl is logging
-facade inspired by similar frameworks in Java, like [slf4j](https://slf4j.org), which are widely used throghout the
-Java ecosystem to provide a common interface, configuration, and abstractions for all the most popular logging 
-libraries for the JVM. Dazl wraps [Uber's zap logging library](https://github.com/uber-go/zap), enriching 
-it and the existing ecosystem with fine-grained logging controls and configuration files, making your applications 
-easier to configure and debug, both for you and your users.
+Dazl is not just another Go logging framework. We're not here to reinvent Go logging for the nth time. Dazl is facade
+for existing frameworks inspired by similar projects that are widely used within the Java ecosystem, like 
+[slf4j](https://slf4j.org). Dazl wraps Uber's [zap logging library](https://github.com/uber-go/zap), enriching it and 
+the existing Go ecosystem with fine-grained logging controls and configuration files, making your applications 
+easier to configure and debug, for developers and maintainers alike.
 
 ### A brief history
 
