@@ -57,18 +57,18 @@ go get github.com/atomix/dazl
 The typical usage of the framework is to create a `Logger` once at the top of each Go package:
 
 ```go
-var log = dazl.GetLogger()
+var log = dazl.GetPackageLogger()
 ```
 
-By default, loggers will be assigned the path of the package calling the `GetLogger()` function. So, if you 
-call `dazl.GetLogger()` from the `github.com/atomix/atomix/runtime` package, the logger will be assigned the
+Package loggers are assigned the name of the package calling the `GetPackageLogger()` function. So, if you
+call `dazl.GetPackageLogger()` from the `github.com/atomix/atomix/runtime` package, the logger will be assigned the
 name `github.com/atomix/atomix/runtime`. The naming strategy becomes important for 
 [logger configuration](#configuration) and, in particular, [inheritance](#inheritance).
 
 ```go
 const author = "kuujo"
 
-var log = dazl.GetLogger()
+var log = dazl.GetPackageLogger()
 
 func main() {
     log.Infof("The author of dazl is %s", author)
@@ -79,14 +79,20 @@ func main() {
 2023-03-31T01:13:30.607Z	INFO	main.go:12	My name is Jordan Halterman
 ```
 
-A custom name may also be assigned to loggers:
+Alternatively, custom loggers can be retrieved via `GetLogger`:
 
 ```go
-var log = dazl.GetLogger("test")
+var log = dazl.GetLogger("foo/bar")
 ```
 
 Logger names must be formatted in path format, with each element separated by a `/`. This format is used
 to establish a hierarchy for [inheritence](#inheritance) of logger configurations.
+
+All loggers are descendants of the root logger:
+
+```go
+var log = dazl.GetRootLogger()
+```
 
 ## Log levels
 
@@ -120,6 +126,9 @@ fields for each log level:
 * `Warnw(msg string, fields ...Field)`
 * ...
 
+Messages will only be written to log [outputs](#outputs) if the configured level of the logger is higher than the
+message level.
+
 ## Structured logging
 
 Structured logging is supported for the JSON [encoding](#encodings), and JSON fields are configurable via
@@ -138,7 +147,7 @@ log.Warnw("Something went wrong!",
 Alternatively, you can create a structured logger with a fixed set of fields using the `WithFields` method:
 
 ```go
-var log = dazl.GetLogger().WithFields(
+var log = dazl.GetPackageLogger().WithFields(
     dazl.String("user", user.Name),
     dazl.Uint64("id", user.ID))
 log.Warn("Something went wrong!")
@@ -169,6 +178,12 @@ via the `Logger` API to control the granularity of a logger's output:
 
 ```go
 dazl.GetLogger("github.com/atomix").SetLevel(dazl.DebugLevel)
+```
+
+The root logger is the ancestor of all other loggers and can be configured via `GetRootLogger`:
+
+```go
+dazl.GetRootLogger().SetLevel(dazl.InfoLevel)
 ```
 
 If the level for a logger is not explicitly set, it will inherit its level from its nearest ancestor in
@@ -471,7 +486,7 @@ func TestLogger(t *testing.T) {
         dazl.WithLevelEncoder(zapcore.CapitalLevelEncoder))
     assert.NoError(t, err)
     
-    var log = dazl.GetLogger().WithOutputs(dazl.NewOutput(sink))
+    var log = dazl.GetPackageLogger().WithOutputs(dazl.NewOutput(sink))
     
     log.Info("Hello world!")
     assert.Equal(t, "INFO\tgithub.com/my/package\tHello world!\n", buf.String())

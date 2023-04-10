@@ -31,77 +31,23 @@ func init() {
 	}
 }
 
-func configure(config Config) error {
-	logger, err := newLogger(config)
-	if err != nil {
-		return err
-	}
-	root = logger
-	return nil
+// GetRootLogger gets the root logger.
+func GetRootLogger() Logger {
+	return root
 }
 
-func newLogger(config Config) (Logger, error) {
-	context := newZapContext(config)
-	var outputs []Output
-	for name, outputConfig := range config.RootLogger.GetOutputs() {
-		sink, err := context.getSink(outputConfig.GetSink())
-		if err != nil {
-			return nil, err
-		}
-		outputs = append(outputs, newOutput(name, sink, outputConfig))
-	}
-
-	logger := &zapLogger{
-		dazlLogger: &dazlLogger{
-			zapContext: context,
-			config:     config.RootLogger,
-		},
-		outputs: outputs,
-	}
-	if config.RootLogger.Level != nil {
-		logger.level.Store(int32(toLevel(*config.RootLogger.Level)))
-	}
-	return logger, nil
-}
-
-// GetLogger gets a logger by name
-func GetLogger(paths ...string) Logger {
-	if len(paths) > 1 {
-		panic("number of paths must be 0 or 1")
-	}
-	if len(paths) == 0 {
-		pkg, ok := getCallerPackage()
-		if !ok {
-			panic("could not retrieve logger package")
-		}
-		paths = []string{pkg}
-	}
-	path := paths[0]
-	if path == "" {
-		return root
-	}
-	return root.GetLogger(path)
-}
-
-// getCallerPackage gets the package name of the calling function'ss caller
-func getCallerPackage() (string, bool) {
-	var pkg string
-	pc, _, _, ok := runtime.Caller(2)
+// GetPackageLogger gets the logger for the current package.
+func GetPackageLogger() Logger {
+	pkg, ok := getCallerPackage()
 	if !ok {
-		return pkg, false
+		panic("could not retrieve logger package")
 	}
-	parts := strings.Split(runtime.FuncForPC(pc).Name(), ".")
-	if parts[len(parts)-2][0] == '(' {
-		pkg = strings.Join(parts[0:len(parts)-2], ".")
-	} else {
-		pkg = strings.Join(parts[0:len(parts)-1], ".")
-	}
-	return pkg, true
+	return GetLogger(pkg)
 }
 
-// SetLevel sets the root logger level
-func SetLevel(level Level) {
-	root.SetLevel(level)
+// GetLogger gets the logger for the given path.
+func GetLogger(path string) Logger {
+	return GetRootLogger().GetLogger(path)
 }
 
 // Logger represents an abstract logging interface.
@@ -153,6 +99,60 @@ type Logger interface {
 	Panic(...interface{})
 	Panicf(template string, args ...interface{})
 	Panicw(msg string, fields ...Field)
+}
+
+// SetLevel sets the root logger level
+func SetLevel(level Level) {
+	GetRootLogger().SetLevel(level)
+}
+
+// getCallerPackage gets the package name of the calling function'ss caller
+func getCallerPackage() (string, bool) {
+	var pkg string
+	pc, _, _, ok := runtime.Caller(2)
+	if !ok {
+		return pkg, false
+	}
+	parts := strings.Split(runtime.FuncForPC(pc).Name(), ".")
+	if parts[len(parts)-2][0] == '(' {
+		pkg = strings.Join(parts[0:len(parts)-2], ".")
+	} else {
+		pkg = strings.Join(parts[0:len(parts)-1], ".")
+	}
+	return pkg, true
+}
+
+func configure(config Config) error {
+	logger, err := newLogger(config)
+	if err != nil {
+		return err
+	}
+	root = logger
+	return nil
+}
+
+func newLogger(config Config) (Logger, error) {
+	context := newZapContext(config)
+	var outputs []Output
+	for name, outputConfig := range config.RootLogger.GetOutputs() {
+		sink, err := context.getSink(outputConfig.GetSink())
+		if err != nil {
+			return nil, err
+		}
+		outputs = append(outputs, newOutput(name, sink, outputConfig))
+	}
+
+	logger := &zapLogger{
+		dazlLogger: &dazlLogger{
+			zapContext: context,
+			config:     config.RootLogger,
+		},
+		outputs: outputs,
+	}
+	if config.RootLogger.Level != nil {
+		logger.level.Store(int32(toLevel(*config.RootLogger.Level)))
+	}
+	return logger, nil
 }
 
 func newZapContext(config Config) *zapContext {
@@ -241,6 +241,9 @@ func (l *zapLogger) Name() string {
 }
 
 func (l *zapLogger) GetLogger(path string) Logger {
+	if path == "" {
+		return l
+	}
 	logger := l
 	names := strings.Split(path, pathSep)
 	for _, name := range names {

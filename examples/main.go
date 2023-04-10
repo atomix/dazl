@@ -6,7 +6,7 @@ package main
 
 import "github.com/atomix/dazl"
 
-var log = dazl.GetLogger()
+var log = dazl.GetPackageLogger()
 
 func main() {
 	log.Info("Hello world!")
