@@ -6,6 +6,7 @@ package dazl
 
 import (
 	"github.com/stretchr/testify/assert"
+	"gopkg.in/yaml.v3"
 	"testing"
 )
 
@@ -22,4 +23,13 @@ func TestLevel(t *testing.T) {
 	assert.True(t, FatalLevel.Enabled(FatalLevel))
 	assert.False(t, PanicLevel.Enabled(FatalLevel))
 	assert.True(t, PanicLevel.Enabled(PanicLevel))
+}
+
+const testLevel = "info"
+
+func TestUnmarshalLevel(t *testing.T) {
+	var level levelConfig
+	assert.NotEqual(t, InfoLevel, level.Level())
+	assert.NoError(t, yaml.Unmarshal([]byte(testLevel), &level))
+	assert.Equal(t, InfoLevel, level.Level())
 }

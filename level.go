@@ -38,6 +38,30 @@ func (l Level) String() string {
 	return [...]string{"", "debug", "info", "warn", "error", "fatal", "panic"}[l]
 }
 
+type levelConfig Level
+
+func (c levelConfig) Level() Level {
+	return Level(c)
+}
+
+func (l *levelConfig) UnmarshalText(text []byte) error {
+	switch string(text) {
+	case DebugLevel.String():
+		*l = levelConfig(DebugLevel)
+	case InfoLevel.String():
+		*l = levelConfig(InfoLevel)
+	case WarnLevel.String():
+		*l = levelConfig(WarnLevel)
+	case ErrorLevel.String():
+		*l = levelConfig(ErrorLevel)
+	case FatalLevel.String():
+		*l = levelConfig(FatalLevel)
+	case PanicLevel.String():
+		*l = levelConfig(PanicLevel)
+	}
+	return nil
+}
+
 func toLevel(l string) Level {
 	switch strings.ToLower(l) {
 	case DebugLevel.String():
