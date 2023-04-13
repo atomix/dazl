@@ -45,9 +45,9 @@ func TestUnmarshalEncoders(t *testing.T) {
 	assert.Equal(t, "time", encoders.Console.Fields.Time.Key)
 	assert.Equal(t, "caller", encoders.Console.Fields.Caller.Key)
 
-	assert.Equal(t, upperCaseLevelFormat, encoders.Console.Fields.Level.Format)
-	assert.Equal(t, unixTimeFormat, encoders.Console.Fields.Time.Format)
-	assert.Equal(t, shortCallerFormat, encoders.Console.Fields.Caller.Format)
+	assert.Equal(t, UpperCaseLevelFormat, encoders.Console.Fields.Level.Format)
+	assert.Equal(t, UnixTimeFormat, encoders.Console.Fields.Time.Format)
+	assert.Equal(t, ShortCallerFormat, encoders.Console.Fields.Caller.Format)
 
 	assert.NotNil(t, encoders.JSON)
 	assert.NotNil(t, encoders.JSON.Fields.Message)
@@ -61,7 +61,7 @@ func TestUnmarshalEncoders(t *testing.T) {
 	assert.Equal(t, "timestamp", encoders.JSON.Fields.Time.Key)
 	assert.Equal(t, "caller", encoders.JSON.Fields.Caller.Key)
 
-	assert.Equal(t, lowerCaseLevelFormat, encoders.JSON.Fields.Level.Format)
-	assert.Equal(t, iso8601TimeFormat, encoders.JSON.Fields.Time.Format)
-	assert.Equal(t, longCallerFormat, encoders.JSON.Fields.Caller.Format)
+	assert.Equal(t, LowerCaseLevelFormat, encoders.JSON.Fields.Level.Format)
+	assert.Equal(t, ISO8601TimeFormat, encoders.JSON.Fields.Time.Format)
+	assert.Equal(t, FulCallerFormat, encoders.JSON.Fields.Caller.Format)
 }

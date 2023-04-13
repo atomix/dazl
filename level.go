@@ -4,10 +4,6 @@
 
 package dazl
 
-import (
-	"strings"
-)
-
 // Level :
 type Level int32
 
@@ -44,39 +40,22 @@ func (c levelConfig) Level() Level {
 	return Level(c)
 }
 
-func (l *levelConfig) UnmarshalText(text []byte) error {
+func (c *levelConfig) UnmarshalText(text []byte) error {
 	switch string(text) {
 	case DebugLevel.String():
-		*l = levelConfig(DebugLevel)
+		*c = levelConfig(DebugLevel)
 	case InfoLevel.String():
-		*l = levelConfig(InfoLevel)
+		*c = levelConfig(InfoLevel)
 	case WarnLevel.String():
-		*l = levelConfig(WarnLevel)
+		*c = levelConfig(WarnLevel)
 	case ErrorLevel.String():
-		*l = levelConfig(ErrorLevel)
+		*c = levelConfig(ErrorLevel)
 	case FatalLevel.String():
-		*l = levelConfig(FatalLevel)
+		*c = levelConfig(FatalLevel)
 	case PanicLevel.String():
-		*l = levelConfig(PanicLevel)
+		*c = levelConfig(PanicLevel)
+	default:
+		*c = levelConfig(EmptyLevel)
 	}
 	return nil
-}
-
-func toLevel(l string) Level {
-	switch strings.ToLower(l) {
-	case DebugLevel.String():
-		return DebugLevel
-	case InfoLevel.String():
-		return InfoLevel
-	case WarnLevel.String():
-		return WarnLevel
-	case ErrorLevel.String():
-		return ErrorLevel
-	case FatalLevel.String():
-		return FatalLevel
-	case PanicLevel.String():
-		return PanicLevel
-	default:
-		return EmptyLevel
-	}
 }

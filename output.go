@@ -4,134 +4,100 @@
 
 package dazl
 
-// Output is a dazl output
-type Output interface {
-	Name() string
-	Level() Level
-	getChild(name string) Output
-	WithLevel(level Level) Output
-	WithFields(fields ...Field) Output
-	WithSkipCalls(calls int) Output
-	Debug(msg string, fields ...Field)
-	Info(msg string, fields ...Field)
-	Error(msg string, fields ...Field)
-	Fatal(msg string, fields ...Field)
-	Panic(msg string, fields ...Field)
-	Warn(msg string, fields ...Field)
-	Sync() error
+type outputConfig struct {
+	Writer string          `json:"writer" yaml:"writer"`
+	Level  *levelConfig    `json:"level" yaml:"level"`
+	Sample *samplingConfig `json:"sample" yaml:"sample"`
 }
 
-type OutputOption func(*OutputConfig)
-
-func WithLevel(level Level) OutputOption {
-	levelString := level.String()
-	return func(config *OutputConfig) {
-		config.Level = &levelString
+func newOutput(name string, writer Writer, level Level, sampler Sampler) *dazlOutput {
+	return &dazlOutput{
+		name:    name,
+		writer:  writer,
+		level:   level,
+		sampler: sampler,
 	}
 }
 
-// NewOutput creates a new logger output
-func NewOutput(sink Sink, opts ...OutputOption) Output {
-	var config OutputConfig
-	for _, opt := range opts {
-		opt(&config)
-	}
-	return newOutput("", sink, config)
+// dazlOutput is a dazl output implementation
+type dazlOutput struct {
+	name    string
+	writer  Writer
+	level   Level
+	sampler Sampler
 }
 
-func newOutput(name string, sink Sink, config OutputConfig) Output {
-	return &zapOutput{
-		name:  name,
-		sink:  sink,
-		level: config.GetLevel(),
-	}
-}
-
-// zapOutput is a dazl output implementation
-type zapOutput struct {
-	name  string
-	sink  Sink
-	level Level
-}
-
-func (o *zapOutput) Name() string {
+func (o *dazlOutput) Name() string {
 	return o.name
 }
 
-func (o *zapOutput) Level() Level {
+func (o *dazlOutput) Writer() Writer {
+	return o.writer
+}
+
+func (o *dazlOutput) WithWriter(writer Writer) *dazlOutput {
+	return &dazlOutput{
+		name:    o.name,
+		writer:  writer,
+		level:   o.level,
+		sampler: o.sampler,
+	}
+}
+
+func (o *dazlOutput) Level() Level {
 	return o.level
 }
 
-func (o *zapOutput) getChild(name string) Output {
-	return &zapOutput{
-		name:  o.name,
-		sink:  o.sink.getChild(name),
-		level: o.level,
+func (o *dazlOutput) WithLevel(level Level) *dazlOutput {
+	return &dazlOutput{
+		name:    o.name,
+		writer:  o.writer,
+		level:   level,
+		sampler: o.sampler,
 	}
 }
 
-func (o *zapOutput) WithLevel(level Level) Output {
-	return &zapOutput{
-		name:  o.name,
-		sink:  o.sink,
-		level: level,
+func (o *dazlOutput) WithSampler(sampler Sampler) *dazlOutput {
+	return &dazlOutput{
+		name:    o.name,
+		writer:  o.writer,
+		level:   o.level,
+		sampler: sampler,
 	}
 }
 
-func (o *zapOutput) WithFields(fields ...Field) Output {
-	return &zapOutput{
-		name:  o.name,
-		sink:  o.sink.WithFields(fields...),
-		level: o.level,
+func (o *dazlOutput) Debug(msg string) {
+	if o.level.Enabled(DebugLevel) && o.sampler.Sample(DebugLevel) {
+		o.writer.Debug(msg)
 	}
 }
 
-func (o *zapOutput) WithSkipCalls(calls int) Output {
-	return &zapOutput{
-		name:  o.name,
-		sink:  o.sink.WithSkipCalls(calls),
-		level: o.level,
+func (o *dazlOutput) Info(msg string) {
+	if o.level.Enabled(InfoLevel) && o.sampler.Sample(InfoLevel) {
+		o.writer.Info(msg)
 	}
 }
 
-func (o *zapOutput) Debug(msg string, fields ...Field) {
-	if o.level.Enabled(DebugLevel) {
-		o.sink.Debug(msg, fields...)
+func (o *dazlOutput) Warn(msg string) {
+	if o.level.Enabled(WarnLevel) && o.sampler.Sample(WarnLevel) {
+		o.writer.Warn(msg)
 	}
 }
 
-func (o *zapOutput) Info(msg string, fields ...Field) {
-	if o.level.Enabled(InfoLevel) {
-		o.sink.Info(msg, fields...)
+func (o *dazlOutput) Error(msg string) {
+	if o.level.Enabled(ErrorLevel) && o.sampler.Sample(ErrorLevel) {
+		o.writer.Error(msg)
 	}
 }
 
-func (o *zapOutput) Error(msg string, fields ...Field) {
-	if o.level.Enabled(ErrorLevel) {
-		o.sink.Error(msg, fields...)
+func (o *dazlOutput) Fatal(msg string) {
+	if o.level.Enabled(FatalLevel) && o.sampler.Sample(FatalLevel) {
+		o.writer.Fatal(msg)
 	}
 }
 
-func (o *zapOutput) Fatal(msg string, fields ...Field) {
-	if o.level.Enabled(FatalLevel) {
-		o.sink.Fatal(msg, fields...)
+func (o *dazlOutput) Panic(msg string) {
+	if o.level.Enabled(PanicLevel) && o.sampler.Sample(PanicLevel) {
+		o.writer.Panic(msg)
 	}
 }
-
-func (o *zapOutput) Panic(msg string, fields ...Field) {
-	if o.level.Enabled(PanicLevel) {
-		o.sink.Panic(msg, fields...)
-	}
-}
-
-func (o *zapOutput) Warn(msg string, fields ...Field) {
-	if o.level.Enabled(WarnLevel) {
-		o.sink.Warn(msg, fields...)
-	}
-}
-
-func (o *zapOutput) Sync() error {
-	return o.sink.Sync()
-}
-
-var _ Output = &zapOutput{}

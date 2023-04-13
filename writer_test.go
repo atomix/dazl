@@ -28,8 +28,8 @@ func TestUnmarshalWriters(t *testing.T) {
 	assert.NotNil(t, writers.Stderr)
 	assert.Len(t, writers.Files, 1)
 
-	assert.Equal(t, consoleEncoderName, writers.Stdout.Encoder)
-	assert.Equal(t, consoleEncoderName, writers.Stderr.Encoder)
-	assert.Equal(t, jsonEncoderName, writers.Files["file"].Encoder)
+	assert.Equal(t, ConsoleEncoding, writers.Stdout.Encoder)
+	assert.Equal(t, ConsoleEncoding, writers.Stderr.Encoder)
+	assert.Equal(t, JSONEncoding, writers.Files["file"].Encoder)
 	assert.Equal(t, "./foo/bar", writers.Files["file"].Path)
 }

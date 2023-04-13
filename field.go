@@ -5,408 +5,636 @@
 package dazl
 
 import (
+	"bytes"
 	"fmt"
-	"go.uber.org/zap"
+	"strconv"
 	"time"
 )
 
 // Field is a structured logger field
-type Field interface {
-	getZapField() zap.Field
-}
-
-type zapField struct {
-	field zap.Field
-}
-
-// Name returns the field name
-func (f *zapField) Name() string {
-	return f.field.Key
-}
-
-func (f *zapField) getZapField() zap.Field {
-	return f.field
-}
+type Field func(writer Writer) (Writer, error)
 
 // Error creates a named field for an error
 func Error(name string, err error) Field {
-	return &zapField{
-		field: zap.Error(err),
+	return func(writer Writer) (Writer, error) {
+		if fieldWriter, ok := writer.(ErrorFieldWriter); ok {
+			return fieldWriter.WithErrorField(name, err), nil
+		}
+		if fieldWriter, ok := writer.(StringFieldWriter); ok {
+			return fieldWriter.WithStringField(name, err.Error()), nil
+		}
+		return nil, fmt.Errorf("field type is not supported by the configured logging framework")
 	}
 }
 
 // Stringer creates a named field for a type implementing Stringer
 func Stringer(name string, value fmt.Stringer) Field {
-	return &zapField{
-		field: zap.Stringer(name, value),
+	return func(writer Writer) (Writer, error) {
+		if fieldWriter, ok := writer.(StringerFieldWriter); ok {
+			return fieldWriter.WithStringerField(name, value), nil
+		}
+		if fieldWriter, ok := writer.(StringFieldWriter); ok {
+			return fieldWriter.WithStringField(name, value.String()), nil
+		}
+		return nil, fmt.Errorf("field type is not supported by the configured logging framework")
 	}
-}
-
-// Trunc creates a truncated named field for a Stringer
-func Trunc(name string, value fmt.Stringer, len int) Field {
-	return &zapField{
-		field: zap.Stringer(name, &truncStringer{
-			stringer: value,
-			length:   len,
-		}),
-	}
-}
-
-func Trunc8(name string, value fmt.Stringer) Field {
-	return Trunc(name, value, 8)
-}
-
-func Trunc16(name string, value fmt.Stringer) Field {
-	return Trunc(name, value, 16)
-}
-
-func Trunc32(name string, value fmt.Stringer) Field {
-	return Trunc(name, value, 32)
-}
-
-func Trunc64(name string, value fmt.Stringer) Field {
-	return Trunc(name, value, 64)
-}
-
-func Trunc128(name string, value fmt.Stringer) Field {
-	return Trunc(name, value, 128)
-}
-
-func Trunc256(name string, value fmt.Stringer) Field {
-	return Trunc(name, value, 256)
-}
-
-type truncStringer struct {
-	stringer fmt.Stringer
-	length   int
-}
-
-func (s *truncStringer) String() string {
-	value := s.stringer.String()
-	if len(value) > s.length {
-		return value[:s.length]
-	}
-	return value
 }
 
 // String creates a named string field
 func String(name string, value string) Field {
-	return &zapField{
-		field: zap.String(name, value),
+	return func(writer Writer) (Writer, error) {
+		if fieldWriter, ok := writer.(StringFieldWriter); ok {
+			return fieldWriter.WithStringField(name, value), nil
+		}
+		return nil, fmt.Errorf("field type is not supported by the configured logging framework")
 	}
 }
 
 // Stringp creates a named string pointer field
 func Stringp(name string, value *string) Field {
-	return &zapField{
-		field: zap.Stringp(name, value),
+	return func(writer Writer) (Writer, error) {
+		if fieldWriter, ok := writer.(StringPointerFieldWriter); ok {
+			return fieldWriter.WithStringPointerField(name, value), nil
+		}
+		if fieldWriter, ok := writer.(StringFieldWriter); ok && value != nil {
+			return fieldWriter.WithStringField(name, *value), nil
+		}
+		return nil, fmt.Errorf("field type is not supported by the configured logging framework")
 	}
 }
 
 // Strings creates a named string slice field
 func Strings(name string, value []string) Field {
-	return &zapField{
-		field: zap.Strings(name, value),
+	return func(writer Writer) (Writer, error) {
+		if fieldWriter, ok := writer.(StringSliceFieldWriter); ok {
+			return fieldWriter.WithStringSliceField(name, value), nil
+		}
+		if fieldWriter, ok := writer.(StringFieldWriter); ok {
+			return fieldWriter.WithStringField(name, fmt.Sprint(value)), nil
+		}
+		return nil, fmt.Errorf("field type is not supported by the configured logging framework")
 	}
 }
 
 // Int creates a named int field
 func Int(name string, value int) Field {
-	return &zapField{
-		field: zap.Int(name, value),
+	return func(writer Writer) (Writer, error) {
+		if fieldWriter, ok := writer.(IntFieldWriter); ok {
+			return fieldWriter.WithIntField(name, value), nil
+		}
+		if fieldWriter, ok := writer.(StringFieldWriter); ok {
+			return fieldWriter.WithStringField(name, strconv.Itoa(value)), nil
+		}
+		return nil, fmt.Errorf("field type is not supported by the configured logging framework")
 	}
 }
 
 // Intp creates a named int pointer field
 func Intp(name string, value *int) Field {
-	return &zapField{
-		field: zap.Intp(name, value),
+	return func(writer Writer) (Writer, error) {
+		if fieldWriter, ok := writer.(IntPointerFieldWriter); ok {
+			return fieldWriter.WithIntPointerField(name, value), nil
+		}
+		if value == nil {
+			return nil, fmt.Errorf("nil pointers are not supported by the configured logging framework")
+		}
+		if fieldWriter, ok := writer.(IntFieldWriter); ok {
+			return fieldWriter.WithIntField(name, *value), nil
+		}
+		if fieldWriter, ok := writer.(StringFieldWriter); ok {
+			return fieldWriter.WithStringField(name, strconv.Itoa(*value)), nil
+		}
+		return nil, fmt.Errorf("field type is not supported by the configured logging framework")
 	}
 }
 
 // Ints creates a named int slice field
 func Ints(name string, value []int) Field {
-	return &zapField{
-		field: zap.Ints(name, value),
+	return func(writer Writer) (Writer, error) {
+		if fieldWriter, ok := writer.(IntSliceFieldWriter); ok {
+			return fieldWriter.WithIntSliceField(name, value), nil
+		}
+		if fieldWriter, ok := writer.(StringFieldWriter); ok {
+			return fieldWriter.WithStringField(name, fmt.Sprint(value)), nil
+		}
+		return nil, fmt.Errorf("field type is not supported by the configured logging framework")
 	}
 }
 
 // Int32 creates a named int32 field
 func Int32(name string, value int32) Field {
-	return &zapField{
-		field: zap.Int32(name, value),
+	return func(writer Writer) (Writer, error) {
+		if fieldWriter, ok := writer.(Int32FieldWriter); ok {
+			return fieldWriter.WithInt32Field(name, value), nil
+		}
+		if fieldWriter, ok := writer.(IntFieldWriter); ok {
+			return fieldWriter.WithIntField(name, int(value)), nil
+		}
+		if fieldWriter, ok := writer.(StringFieldWriter); ok {
+			return fieldWriter.WithStringField(name, fmt.Sprint(value)), nil
+		}
+		return nil, fmt.Errorf("field type is not supported by the configured logging framework")
 	}
 }
 
 // Int32p creates a named int32 pointer field
 func Int32p(name string, value *int32) Field {
-	return &zapField{
-		field: zap.Int32p(name, value),
+	return func(writer Writer) (Writer, error) {
+		if fieldWriter, ok := writer.(Int32PointerFieldWriter); ok {
+			return fieldWriter.WithInt32PointerField(name, value), nil
+		}
+		if value == nil {
+			return nil, fmt.Errorf("nil pointers are not supported by the configured logging framework")
+		}
+		if fieldWriter, ok := writer.(Int32FieldWriter); ok {
+			return fieldWriter.WithInt32Field(name, *value), nil
+		}
+		if fieldWriter, ok := writer.(IntFieldWriter); ok {
+			return fieldWriter.WithIntField(name, int(*value)), nil
+		}
+		if fieldWriter, ok := writer.(StringFieldWriter); ok {
+			return fieldWriter.WithStringField(name, strconv.Itoa(int(*value))), nil
+		}
+		return nil, fmt.Errorf("field type is not supported by the configured logging framework")
 	}
 }
 
 // Int32s creates a named int32 slice field
 func Int32s(name string, value []int32) Field {
-	return &zapField{
-		field: zap.Int32s(name, value),
+	return func(writer Writer) (Writer, error) {
+		if fieldWriter, ok := writer.(Int32SliceFieldWriter); ok {
+			return fieldWriter.WithInt32SliceField(name, value), nil
+		}
+		if fieldWriter, ok := writer.(StringFieldWriter); ok {
+			return fieldWriter.WithStringField(name, fmt.Sprint(value)), nil
+		}
+		return nil, fmt.Errorf("field type is not supported by the configured logging framework")
 	}
 }
 
 // Int64 creates a named int64 field
 func Int64(name string, value int64) Field {
-	return &zapField{
-		field: zap.Int64(name, value),
+	return func(writer Writer) (Writer, error) {
+		if fieldWriter, ok := writer.(Int64FieldWriter); ok {
+			return fieldWriter.WithInt64Field(name, value), nil
+		}
+		if fieldWriter, ok := writer.(IntFieldWriter); ok {
+			return fieldWriter.WithIntField(name, int(value)), nil
+		}
+		if fieldWriter, ok := writer.(StringFieldWriter); ok {
+			return fieldWriter.WithStringField(name, strconv.Itoa(int(value))), nil
+		}
+		return nil, fmt.Errorf("field type is not supported by the configured logging framework")
 	}
 }
 
 // Int64p creates a named int64 pointer field
 func Int64p(name string, value *int64) Field {
-	return &zapField{
-		field: zap.Int64p(name, value),
+	return func(writer Writer) (Writer, error) {
+		if fieldWriter, ok := writer.(Int64PointerFieldWriter); ok {
+			return fieldWriter.WithInt64PointerField(name, value), nil
+		}
+		if value == nil {
+			return nil, fmt.Errorf("nil pointers are not supported by the configured logging framework")
+		}
+		if fieldWriter, ok := writer.(Int64FieldWriter); ok {
+			return fieldWriter.WithInt64Field(name, *value), nil
+		}
+		if fieldWriter, ok := writer.(IntFieldWriter); ok {
+			return fieldWriter.WithIntField(name, int(*value)), nil
+		}
+		if fieldWriter, ok := writer.(StringFieldWriter); ok {
+			return fieldWriter.WithStringField(name, strconv.Itoa(int(*value))), nil
+		}
+		return nil, fmt.Errorf("field type is not supported by the configured logging framework")
 	}
 }
 
 // Int64s creates a named int64 slice field
 func Int64s(name string, value []int64) Field {
-	return &zapField{
-		field: zap.Int64s(name, value),
+	return func(writer Writer) (Writer, error) {
+		if fieldWriter, ok := writer.(Int64SliceFieldWriter); ok {
+			return fieldWriter.WithInt64SliceField(name, value), nil
+		}
+		if fieldWriter, ok := writer.(StringFieldWriter); ok {
+			return fieldWriter.WithStringField(name, fmt.Sprint(value)), nil
+		}
+		return nil, fmt.Errorf("field type is not supported by the configured logging framework")
 	}
 }
 
 // Uint creates a named uint field
 func Uint(name string, value uint) Field {
-	return &zapField{
-		field: zap.Uint(name, value),
+	return func(writer Writer) (Writer, error) {
+		if fieldWriter, ok := writer.(UintFieldWriter); ok {
+			return fieldWriter.WithUintField(name, value), nil
+		}
+		if fieldWriter, ok := writer.(IntFieldWriter); ok {
+			return fieldWriter.WithIntField(name, int(value)), nil
+		}
+		if fieldWriter, ok := writer.(StringFieldWriter); ok {
+			return fieldWriter.WithStringField(name, strconv.Itoa(int(value))), nil
+		}
+		return nil, fmt.Errorf("field type is not supported by the configured logging framework")
 	}
 }
 
 // Uintp creates a named uint pointer field
 func Uintp(name string, value *uint) Field {
-	return &zapField{
-		field: zap.Uintp(name, value),
+	return func(writer Writer) (Writer, error) {
+		if fieldWriter, ok := writer.(UintPointerFieldWriter); ok {
+			return fieldWriter.WithUintPointerField(name, value), nil
+		}
+		if value == nil {
+			return nil, fmt.Errorf("nil pointers are not supported by the configured logging framework")
+		}
+		if fieldWriter, ok := writer.(UintFieldWriter); ok {
+			return fieldWriter.WithUintField(name, *value), nil
+		}
+		if fieldWriter, ok := writer.(IntFieldWriter); ok {
+			return fieldWriter.WithIntField(name, int(*value)), nil
+		}
+		if fieldWriter, ok := writer.(StringFieldWriter); ok {
+			return fieldWriter.WithStringField(name, strconv.Itoa(int(*value))), nil
+		}
+		return nil, fmt.Errorf("field type is not supported by the configured logging framework")
 	}
 }
 
 // Uints creates a named uint slice field
 func Uints(name string, value []uint) Field {
-	return &zapField{
-		field: zap.Uints(name, value),
+	return func(writer Writer) (Writer, error) {
+		if fieldWriter, ok := writer.(UintSliceFieldWriter); ok {
+			return fieldWriter.WithUintSliceField(name, value), nil
+		}
+		if fieldWriter, ok := writer.(StringFieldWriter); ok {
+			return fieldWriter.WithStringField(name, fmt.Sprint(value)), nil
+		}
+		return nil, fmt.Errorf("field type is not supported by the configured logging framework")
 	}
 }
 
 // Uint32 creates a named uint32 field
 func Uint32(name string, value uint32) Field {
-	return &zapField{
-		field: zap.Uint32(name, value),
+	return func(writer Writer) (Writer, error) {
+		if fieldWriter, ok := writer.(Uint32FieldWriter); ok {
+			return fieldWriter.WithUint32Field(name, value), nil
+		}
+		if fieldWriter, ok := writer.(UintFieldWriter); ok {
+			return fieldWriter.WithUintField(name, uint(value)), nil
+		}
+		if fieldWriter, ok := writer.(IntFieldWriter); ok {
+			return fieldWriter.WithIntField(name, int(value)), nil
+		}
+		if fieldWriter, ok := writer.(StringFieldWriter); ok {
+			return fieldWriter.WithStringField(name, strconv.Itoa(int(value))), nil
+		}
+		return nil, fmt.Errorf("field type is not supported by the configured logging framework")
 	}
 }
 
 // Uint32p creates a named uint32 pointer field
 func Uint32p(name string, value *uint32) Field {
-	return &zapField{
-		field: zap.Uint32p(name, value),
+	return func(writer Writer) (Writer, error) {
+		if fieldWriter, ok := writer.(Uint32PointerFieldWriter); ok {
+			return fieldWriter.WithUint32PointerField(name, value), nil
+		}
+		if value == nil {
+			return nil, fmt.Errorf("nil pointers are not supported by the configured logging framework")
+		}
+		if fieldWriter, ok := writer.(Uint32FieldWriter); ok {
+			return fieldWriter.WithUint32Field(name, *value), nil
+		}
+		if fieldWriter, ok := writer.(UintFieldWriter); ok {
+			return fieldWriter.WithUintField(name, uint(*value)), nil
+		}
+		if fieldWriter, ok := writer.(IntFieldWriter); ok {
+			return fieldWriter.WithIntField(name, int(*value)), nil
+		}
+		if fieldWriter, ok := writer.(StringFieldWriter); ok {
+			return fieldWriter.WithStringField(name, strconv.Itoa(int(*value))), nil
+		}
+		return nil, fmt.Errorf("field type is not supported by the configured logging framework")
 	}
 }
 
 // Uint32s creates a named uint32 slice field
 func Uint32s(name string, value []uint32) Field {
-	return &zapField{
-		field: zap.Uint32s(name, value),
+	return func(writer Writer) (Writer, error) {
+		if fieldWriter, ok := writer.(Uint32SliceFieldWriter); ok {
+			return fieldWriter.WithUint32SliceField(name, value), nil
+		}
+		if fieldWriter, ok := writer.(StringFieldWriter); ok {
+			return fieldWriter.WithStringField(name, fmt.Sprint(value)), nil
+		}
+		return nil, fmt.Errorf("field type is not supported by the configured logging framework")
 	}
 }
 
 // Uint64 creates a named uint64 field
 func Uint64(name string, value uint64) Field {
-	return &zapField{
-		field: zap.Uint64(name, value),
+	return func(writer Writer) (Writer, error) {
+		if fieldWriter, ok := writer.(Uint64FieldWriter); ok {
+			return fieldWriter.WithUint64Field(name, value), nil
+		}
+		if fieldWriter, ok := writer.(UintFieldWriter); ok {
+			return fieldWriter.WithUintField(name, uint(value)), nil
+		}
+		if fieldWriter, ok := writer.(IntFieldWriter); ok {
+			return fieldWriter.WithIntField(name, int(value)), nil
+		}
+		if fieldWriter, ok := writer.(StringFieldWriter); ok {
+			return fieldWriter.WithStringField(name, strconv.Itoa(int(value))), nil
+		}
+		return nil, fmt.Errorf("field type is not supported by the configured logging framework")
 	}
 }
 
 // Uint64p creates a named uint64 pointer field
 func Uint64p(name string, value *uint64) Field {
-	return &zapField{
-		field: zap.Uint64p(name, value),
+	return func(writer Writer) (Writer, error) {
+		if fieldWriter, ok := writer.(Uint64PointerFieldWriter); ok {
+			return fieldWriter.WithUint64PointerField(name, value), nil
+		}
+		if value == nil {
+			return nil, fmt.Errorf("nil pointers are not supported by the configured logging framework")
+		}
+		if fieldWriter, ok := writer.(Uint64FieldWriter); ok {
+			return fieldWriter.WithUint64Field(name, *value), nil
+		}
+		if fieldWriter, ok := writer.(UintFieldWriter); ok {
+			return fieldWriter.WithUintField(name, uint(*value)), nil
+		}
+		if fieldWriter, ok := writer.(IntFieldWriter); ok {
+			return fieldWriter.WithIntField(name, int(*value)), nil
+		}
+		if fieldWriter, ok := writer.(StringFieldWriter); ok {
+			return fieldWriter.WithStringField(name, strconv.Itoa(int(*value))), nil
+		}
+		return nil, fmt.Errorf("field type is not supported by the configured logging framework")
 	}
 }
 
 // Uint64s creates a named uint64 slice field
 func Uint64s(name string, value []uint64) Field {
-	return &zapField{
-		field: zap.Uint64s(name, value),
+	return func(writer Writer) (Writer, error) {
+		if fieldWriter, ok := writer.(Uint64SliceFieldWriter); ok {
+			return fieldWriter.WithUint64SliceField(name, value), nil
+		}
+		if fieldWriter, ok := writer.(StringFieldWriter); ok {
+			return fieldWriter.WithStringField(name, fmt.Sprint(value)), nil
+		}
+		return nil, fmt.Errorf("field type is not supported by the configured logging framework")
 	}
 }
 
 // Float32 creates a named float32 field
 func Float32(name string, value float32) Field {
-	return &zapField{
-		field: zap.Float32(name, value),
+	return func(writer Writer) (Writer, error) {
+		if fieldWriter, ok := writer.(Float32FieldWriter); ok {
+			return fieldWriter.WithFloat32Field(name, value), nil
+		}
+		if fieldWriter, ok := writer.(StringFieldWriter); ok {
+			return fieldWriter.WithStringField(name, strconv.FormatFloat(float64(value), 'f', -1, 32)), nil
+		}
+		return nil, fmt.Errorf("field type is not supported by the configured logging framework")
 	}
 }
 
 // Float32p creates a named float32 pointer field
 func Float32p(name string, value *float32) Field {
-	return &zapField{
-		field: zap.Float32p(name, value),
+	return func(writer Writer) (Writer, error) {
+		if fieldWriter, ok := writer.(Float32PointerFieldWriter); ok {
+			return fieldWriter.WithFloat32PointerField(name, value), nil
+		}
+		if value == nil {
+			return nil, fmt.Errorf("nil pointers are not supported by the configured logging framework")
+		}
+		if fieldWriter, ok := writer.(Float32FieldWriter); ok {
+			return fieldWriter.WithFloat32Field(name, *value), nil
+		}
+		if fieldWriter, ok := writer.(StringFieldWriter); ok {
+			return fieldWriter.WithStringField(name, strconv.FormatFloat(float64(*value), 'f', -1, 32)), nil
+		}
+		return nil, fmt.Errorf("field type is not supported by the configured logging framework")
 	}
 }
 
 // Float32s creates a named float32 slice field
 func Float32s(name string, value []float32) Field {
-	return &zapField{
-		field: zap.Float32s(name, value),
+	return func(writer Writer) (Writer, error) {
+		if fieldWriter, ok := writer.(Float32SliceFieldWriter); ok {
+			return fieldWriter.WithFloat32SliceField(name, value), nil
+		}
+		if fieldWriter, ok := writer.(StringFieldWriter); ok {
+			return fieldWriter.WithStringField(name, fmt.Sprint(value)), nil
+		}
+		return nil, fmt.Errorf("field type is not supported by the configured logging framework")
 	}
 }
 
 // Float64 creates a named float64 field
 func Float64(name string, value float64) Field {
-	return &zapField{
-		field: zap.Float64(name, value),
+	return func(writer Writer) (Writer, error) {
+		if fieldWriter, ok := writer.(Float64FieldWriter); ok {
+			return fieldWriter.WithFloat64Field(name, value), nil
+		}
+		if fieldWriter, ok := writer.(StringFieldWriter); ok {
+			return fieldWriter.WithStringField(name, strconv.FormatFloat(value, 'f', -1, 64)), nil
+		}
+		return nil, fmt.Errorf("field type is not supported by the configured logging framework")
 	}
 }
 
 // Float64p creates a named float64 pointer field
 func Float64p(name string, value *float64) Field {
-	return &zapField{
-		field: zap.Float64p(name, value),
+	return func(writer Writer) (Writer, error) {
+		if fieldWriter, ok := writer.(Float64PointerFieldWriter); ok {
+			return fieldWriter.WithFloat64PointerField(name, value), nil
+		}
+		if value == nil {
+			return nil, fmt.Errorf("nil pointers are not supported by the configured logging framework")
+		}
+		if fieldWriter, ok := writer.(Float64FieldWriter); ok {
+			return fieldWriter.WithFloat64Field(name, *value), nil
+		}
+		if fieldWriter, ok := writer.(StringFieldWriter); ok {
+			return fieldWriter.WithStringField(name, strconv.FormatFloat(*value, 'f', -1, 64)), nil
+		}
+		return nil, fmt.Errorf("field type is not supported by the configured logging framework")
 	}
 }
 
 // Float64s creates a named float64 slice field
 func Float64s(name string, value []float64) Field {
-	return &zapField{
-		field: zap.Float64s(name, value),
-	}
-}
-
-// Complex64 creates a named complex64 field
-func Complex64(name string, value complex64) Field {
-	return &zapField{
-		field: zap.Complex64(name, value),
-	}
-}
-
-// Complex64p creates a named complex64 pointer field
-func Complex64p(name string, value *complex64) Field {
-	return &zapField{
-		field: zap.Complex64p(name, value),
-	}
-}
-
-// Complex64s creates a named complex64 slice field
-func Complex64s(name string, value []complex64) Field {
-	return &zapField{
-		field: zap.Complex64s(name, value),
-	}
-}
-
-// Complex128 creates a named complex128 field
-func Complex128(name string, value complex128) Field {
-	return &zapField{
-		field: zap.Complex128(name, value),
-	}
-}
-
-// Complex128p creates a named complex128 pointer field
-func Complex128p(name string, value *complex128) Field {
-	return &zapField{
-		field: zap.Complex128p(name, value),
-	}
-}
-
-// Complex128s creates a named complex128 slice field
-func Complex128s(name string, value []complex128) Field {
-	return &zapField{
-		field: zap.Complex128s(name, value),
+	return func(writer Writer) (Writer, error) {
+		if fieldWriter, ok := writer.(Float64SliceFieldWriter); ok {
+			return fieldWriter.WithFloat64SliceField(name, value), nil
+		}
+		if fieldWriter, ok := writer.(StringFieldWriter); ok {
+			return fieldWriter.WithStringField(name, fmt.Sprint(value)), nil
+		}
+		return nil, fmt.Errorf("field type is not supported by the configured logging framework")
 	}
 }
 
 // Bool creates a named bool field
 func Bool(name string, value bool) Field {
-	return &zapField{
-		field: zap.Bool(name, value),
+	return func(writer Writer) (Writer, error) {
+		if fieldWriter, ok := writer.(BoolFieldWriter); ok {
+			return fieldWriter.WithBoolField(name, value), nil
+		}
+		if fieldWriter, ok := writer.(StringFieldWriter); ok {
+			return fieldWriter.WithStringField(name, strconv.FormatBool(value)), nil
+		}
+		return nil, fmt.Errorf("field type is not supported by the configured logging framework")
 	}
 }
 
 // Boolp creates a named bool pointer field
 func Boolp(name string, value *bool) Field {
-	return &zapField{
-		field: zap.Boolp(name, value),
+	return func(writer Writer) (Writer, error) {
+		if fieldWriter, ok := writer.(BoolPointerFieldWriter); ok {
+			return fieldWriter.WithBoolPointerField(name, value), nil
+		}
+		if value == nil {
+			return nil, fmt.Errorf("nil pointers are not supported by the configured logging framework")
+		}
+		if fieldWriter, ok := writer.(BoolFieldWriter); ok {
+			return fieldWriter.WithBoolField(name, *value), nil
+		}
+		if fieldWriter, ok := writer.(StringFieldWriter); ok {
+			return fieldWriter.WithStringField(name, strconv.FormatBool(*value)), nil
+		}
+		return nil, fmt.Errorf("field type is not supported by the configured logging framework")
 	}
 }
 
 // Bools creates a named bool slice field
 func Bools(name string, value []bool) Field {
-	return &zapField{
-		field: zap.Bools(name, value),
+	return func(writer Writer) (Writer, error) {
+		if fieldWriter, ok := writer.(BoolSliceFieldWriter); ok {
+			return fieldWriter.WithBoolSliceField(name, value), nil
+		}
+		if fieldWriter, ok := writer.(StringFieldWriter); ok {
+			return fieldWriter.WithStringField(name, fmt.Sprint(value)), nil
+		}
+		return nil, fmt.Errorf("field type is not supported by the configured logging framework")
 	}
 }
 
 // Time creates a named Time field
 func Time(name string, value time.Time) Field {
-	return &zapField{
-		field: zap.Time(name, value),
+	return func(writer Writer) (Writer, error) {
+		if fieldWriter, ok := writer.(TimeFieldWriter); ok {
+			return fieldWriter.WithTimeField(name, value), nil
+		}
+		if fieldWriter, ok := writer.(StringFieldWriter); ok {
+			return fieldWriter.WithStringField(name, value.String()), nil
+		}
+		return nil, fmt.Errorf("field type is not supported by the configured logging framework")
 	}
 }
 
 // Timep creates a named Time pointer field
 func Timep(name string, value *time.Time) Field {
-	return &zapField{
-		field: zap.Timep(name, value),
+	return func(writer Writer) (Writer, error) {
+		if fieldWriter, ok := writer.(TimePointerFieldWriter); ok {
+			return fieldWriter.WithTimePointerField(name, value), nil
+		}
+		if value == nil {
+			return nil, fmt.Errorf("nil pointers are not supported by the configured logging framework")
+		}
+		if fieldWriter, ok := writer.(TimeFieldWriter); ok {
+			return fieldWriter.WithTimeField(name, *value), nil
+		}
+		if fieldWriter, ok := writer.(StringFieldWriter); ok {
+			return fieldWriter.WithStringField(name, value.String()), nil
+		}
+		return nil, fmt.Errorf("field type is not supported by the configured logging framework")
 	}
 }
 
 // Times creates a named Time slice field
 func Times(name string, value []time.Time) Field {
-	return &zapField{
-		field: zap.Times(name, value),
+	return func(writer Writer) (Writer, error) {
+		if fieldWriter, ok := writer.(TimeSliceFieldWriter); ok {
+			return fieldWriter.WithTimeSliceField(name, value), nil
+		}
+		if fieldWriter, ok := writer.(StringFieldWriter); ok {
+			return fieldWriter.WithStringField(name, fmt.Sprint(value)), nil
+		}
+		return nil, fmt.Errorf("field type is not supported by the configured logging framework")
 	}
 }
 
 // Duration creates a named Duration field
 func Duration(name string, value time.Duration) Field {
-	return &zapField{
-		field: zap.Duration(name, value),
+	return func(writer Writer) (Writer, error) {
+		if fieldWriter, ok := writer.(DurationFieldWriter); ok {
+			return fieldWriter.WithDurationField(name, value), nil
+		}
+		if fieldWriter, ok := writer.(StringFieldWriter); ok {
+			return fieldWriter.WithStringField(name, value.String()), nil
+		}
+		return nil, fmt.Errorf("field type is not supported by the configured logging framework")
 	}
 }
 
 // Durationp creates a named Duration pointer field
 func Durationp(name string, value *time.Duration) Field {
-	return &zapField{
-		field: zap.Durationp(name, value),
+	return func(writer Writer) (Writer, error) {
+		if fieldWriter, ok := writer.(DurationPointerFieldWriter); ok {
+			return fieldWriter.WithDurationPointerField(name, value), nil
+		}
+		if value == nil {
+			return nil, fmt.Errorf("nil pointers are not supported by the configured logging framework")
+		}
+		if fieldWriter, ok := writer.(DurationFieldWriter); ok {
+			return fieldWriter.WithDurationField(name, *value), nil
+		}
+		if fieldWriter, ok := writer.(StringFieldWriter); ok {
+			return fieldWriter.WithStringField(name, value.String()), nil
+		}
+		return nil, fmt.Errorf("field type is not supported by the configured logging framework")
 	}
 }
 
 // Durations creates a named Duration slice field
 func Durations(name string, value []time.Duration) Field {
-	return &zapField{
-		field: zap.Durations(name, value),
+	return func(writer Writer) (Writer, error) {
+		if fieldWriter, ok := writer.(DurationSliceFieldWriter); ok {
+			return fieldWriter.WithDurationSliceField(name, value), nil
+		}
+		if fieldWriter, ok := writer.(StringFieldWriter); ok {
+			return fieldWriter.WithStringField(name, fmt.Sprint(value)), nil
+		}
+		return nil, fmt.Errorf("field type is not supported by the configured logging framework")
 	}
 }
 
-// Byte creates a named byte field
-func Byte(name string, value byte) Field {
-	return &zapField{
-		field: zap.Binary(name, []byte{value}),
+// Binary creates a named binary field
+func Binary(name string, value []byte) Field {
+	return func(writer Writer) (Writer, error) {
+		if fieldWriter, ok := writer.(BinaryFieldWriter); ok {
+			return fieldWriter.WithBinaryField(name, value), nil
+		}
+		if fieldWriter, ok := writer.(StringFieldWriter); ok {
+			return fieldWriter.WithStringField(name, bytes.NewBuffer(value).String()), nil
+		}
+		return nil, fmt.Errorf("field type is not supported by the configured logging framework")
 	}
 }
 
-// Bytes creates a named byte slice field
+// Bytes creates a named byte string field
 func Bytes(name string, value []byte) Field {
-	return &zapField{
-		field: zap.Binary(name, value),
-	}
-}
-
-// ByteString creates a named byte string field
-func ByteString(name string, value []byte) Field {
-	return &zapField{
-		field: zap.ByteString(name, value),
-	}
-}
-
-// ByteStrings creates a named byte string slice field
-func ByteStrings(name string, value [][]byte) Field {
-	return &zapField{
-		field: zap.ByteStrings(name, value),
+	return func(writer Writer) (Writer, error) {
+		if fieldWriter, ok := writer.(BytesFieldWriter); ok {
+			return fieldWriter.WithBytesField(name, value), nil
+		}
+		if fieldWriter, ok := writer.(StringFieldWriter); ok {
+			return fieldWriter.WithStringField(name, bytes.NewBuffer(value).String()), nil
+		}
+		return nil, fmt.Errorf("field type is not supported by the configured logging framework")
 	}
 }

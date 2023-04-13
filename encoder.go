@@ -9,11 +9,11 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-type encoderName string
+type Encoding string
 
 const (
-	consoleEncoderName encoderName = "console"
-	jsonEncoderName    encoderName = "json"
+	ConsoleEncoding Encoding = "console"
+	JSONEncoding    Encoding = "json"
 )
 
 type encodersConfig struct {
@@ -96,19 +96,19 @@ func (c *encoderFieldSchema) UnmarshalYAML(unmarshal func(any) error) error {
 		case levelFieldName:
 			c.Level = &levelEncoderConfig{
 				fieldEncoderConfig: field,
-				Format:             upperCaseLevelFormat,
+				Format:             UpperCaseLevelFormat,
 			}
 			return yaml.Unmarshal(text, c.Level)
 		case timeFieldName:
 			c.Time = &timeEncoderConfig{
 				fieldEncoderConfig: field,
-				Format:             iso8601TimeFormat,
+				Format:             ISO8601TimeFormat,
 			}
 			return yaml.Unmarshal(text, c.Time)
 		case callerFieldName:
 			c.Caller = &callerEncoderConfig{
 				fieldEncoderConfig: field,
-				Format:             shortCallerFormat,
+				Format:             ShortCallerFormat,
 			}
 			return yaml.Unmarshal(text, c.Caller)
 		case stacktraceFieldName:
@@ -136,17 +136,17 @@ func (c *encoderFieldSchema) UnmarshalText(text []byte) error {
 	case levelFieldName:
 		c.Level = &levelEncoderConfig{
 			fieldEncoderConfig: field,
-			Format:             upperCaseLevelFormat,
+			Format:             UpperCaseLevelFormat,
 		}
 	case timeFieldName:
 		c.Time = &timeEncoderConfig{
 			fieldEncoderConfig: field,
-			Format:             iso8601TimeFormat,
+			Format:             ISO8601TimeFormat,
 		}
 	case callerFieldName:
 		c.Caller = &callerEncoderConfig{
 			fieldEncoderConfig: field,
-			Format:             shortCallerFormat,
+			Format:             ShortCallerFormat,
 		}
 	case stacktraceFieldName:
 		c.Stacktrace = &stacktraceEncoderConfig{
@@ -185,20 +185,20 @@ func (c *messageEncoderConfig) UnmarshalText(text []byte) error {
 	return nil
 }
 
-type levelFormat string
+type LevelFormat string
 
 const (
-	lowerCaseLevelFormat levelFormat = "lowercase"
-	upperCaseLevelFormat levelFormat = "uppercase"
+	LowerCaseLevelFormat LevelFormat = "lowercase"
+	UpperCaseLevelFormat LevelFormat = "uppercase"
 )
 
-func (f *levelFormat) UnmarshalText(text []byte) error {
-	format := levelFormat(text)
+func (f *LevelFormat) UnmarshalText(text []byte) error {
+	format := LevelFormat(text)
 	switch format {
-	case lowerCaseLevelFormat, upperCaseLevelFormat:
+	case LowerCaseLevelFormat, UpperCaseLevelFormat:
 		*f = format
 	case "":
-		*f = upperCaseLevelFormat
+		*f = UpperCaseLevelFormat
 	default:
 		return fmt.Errorf("unknown level format '%s'", format)
 	}
@@ -207,7 +207,7 @@ func (f *levelFormat) UnmarshalText(text []byte) error {
 
 type levelEncoderConfig struct {
 	fieldEncoderConfig `json:",inline" yaml:",inline"`
-	Format             levelFormat `json:"format" yaml:"format"`
+	Format             LevelFormat `json:"format" yaml:"format"`
 }
 
 func (c *levelEncoderConfig) UnmarshalText(text []byte) error {
@@ -219,20 +219,20 @@ func (c *levelEncoderConfig) UnmarshalText(text []byte) error {
 	return nil
 }
 
-type timeFormat string
+type TimeFormat string
 
 const (
-	iso8601TimeFormat timeFormat = "iso8601"
-	unixTimeFormat    timeFormat = "unix"
+	ISO8601TimeFormat TimeFormat = "iso8601"
+	UnixTimeFormat    TimeFormat = "unix"
 )
 
-func (f *timeFormat) UnmarshalText(text []byte) error {
-	format := timeFormat(text)
+func (f *TimeFormat) UnmarshalText(text []byte) error {
+	format := TimeFormat(text)
 	switch format {
-	case iso8601TimeFormat, unixTimeFormat:
+	case ISO8601TimeFormat, UnixTimeFormat:
 		*f = format
 	case "":
-		*f = iso8601TimeFormat
+		*f = ISO8601TimeFormat
 	default:
 		return fmt.Errorf("unknown time format '%s'", format)
 	}
@@ -241,7 +241,7 @@ func (f *timeFormat) UnmarshalText(text []byte) error {
 
 type timeEncoderConfig struct {
 	fieldEncoderConfig `json:",inline" yaml:",inline"`
-	Format             timeFormat `json:"format" yaml:"format"`
+	Format             TimeFormat `json:"format" yaml:"format"`
 }
 
 func (c *timeEncoderConfig) UnmarshalText(text []byte) error {
@@ -253,20 +253,20 @@ func (c *timeEncoderConfig) UnmarshalText(text []byte) error {
 	return nil
 }
 
-type callerFormat string
+type CallerFormat string
 
 const (
-	shortCallerFormat callerFormat = "short"
-	longCallerFormat  callerFormat = "long"
+	ShortCallerFormat CallerFormat = "short"
+	FulCallerFormat   CallerFormat = "full"
 )
 
-func (f *callerFormat) UnmarshalText(text []byte) error {
-	format := callerFormat(text)
+func (f *CallerFormat) UnmarshalText(text []byte) error {
+	format := CallerFormat(text)
 	switch format {
-	case shortCallerFormat, longCallerFormat:
+	case ShortCallerFormat, FulCallerFormat:
 		*f = format
 	case "":
-		*f = shortCallerFormat
+		*f = ShortCallerFormat
 	default:
 		return fmt.Errorf("unknown caller format '%s'", format)
 	}
@@ -275,7 +275,7 @@ func (f *callerFormat) UnmarshalText(text []byte) error {
 
 type callerEncoderConfig struct {
 	fieldEncoderConfig `json:",inline" yaml:",inline"`
-	Format             callerFormat `json:"format" yaml:"format"`
+	Format             CallerFormat `json:"format" yaml:"format"`
 }
 
 func (c *callerEncoderConfig) UnmarshalText(text []byte) error {
