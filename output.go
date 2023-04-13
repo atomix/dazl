@@ -27,10 +27,6 @@ type dazlOutput struct {
 	sampler Sampler
 }
 
-func (o *dazlOutput) Name() string {
-	return o.name
-}
-
 func (o *dazlOutput) Writer() Writer {
 	return o.writer
 }

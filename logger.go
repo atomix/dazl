@@ -26,11 +26,6 @@ func init() {
 	}
 }
 
-// GetRootLogger gets the root logger.
-func GetRootLogger() Logger {
-	return root
-}
-
 // GetPackageLogger gets the logger for the current package.
 func GetPackageLogger() Logger {
 	pkg, ok := getCallerPackage()
@@ -42,7 +37,7 @@ func GetPackageLogger() Logger {
 
 // GetLogger gets the logger for the given path.
 func GetLogger(path string) Logger {
-	return GetRootLogger().GetLogger(path)
+	return root.GetLogger(path)
 }
 
 // Logger represents an abstract logging interface.
@@ -92,7 +87,7 @@ type Logger interface {
 
 // SetLevel sets the root logger level
 func SetLevel(level Level) {
-	GetRootLogger().SetLevel(level)
+	root.SetLevel(level)
 }
 
 // getCallerPackage gets the package name of the calling function'ss caller
@@ -112,7 +107,8 @@ func getCallerPackage() (string, bool) {
 }
 
 func configure(config loggingConfig) error {
-	logger, err := newLogger(config)
+	context := newLoggingContext(config)
+	logger, err := newLogger(context, nil, "")
 	if err != nil {
 		return err
 	}
@@ -120,28 +116,80 @@ func configure(config loggingConfig) error {
 	return nil
 }
 
-func newLogger(config loggingConfig) (Logger, error) {
-	context := newLoggingContext(config)
-	var outputs []*dazlOutput
-	if config.RootLogger.Outputs != nil {
-		for name, outputConfig := range config.RootLogger.Outputs {
+func newLogger(context *loggingContext, parent *dazlLogger, name string) (*dazlLogger, error) {
+	var path []string
+	if parent != nil {
+		path = append(parent.path, name)
+	}
+	loggerName := strings.Join(path, pathSep)
+
+	// Create the child logger.
+	logger := &dazlLogger{
+		loggerContext: &loggerContext{
+			loggingContext: context,
+			name:           loggerName,
+			path:           path,
+		},
+	}
+
+	// Configure the logger's outputs from the configuration
+	loggerConfig, _ := context.config.getLogger(loggerName)
+	parentOutputs := make(map[string]int)
+	if parent != nil {
+		for i, output := range parent.outputs {
+			parentOutputs[output.name] = i
+		}
+
+		defaultLevel := Level(parent.defaultLevel.Load())
+		parentLevel := Level(parent.level.Load())
+		if parentLevel != EmptyLevel {
+			defaultLevel = parentLevel
+		}
+		logger.defaultLevel.Store(int32(defaultLevel))
+	}
+	if loggerConfig.Level != nil {
+		logger.SetLevel(loggerConfig.Level.Level())
+	}
+
+	for outputName, outputConfig := range loggerConfig.getOutputs() {
+		// If the configured output already exists, create a child output that inherits the
+		// parent's level and sampling configuration. Otherwise, create a new output.
+		var output *dazlOutput
+		if i, ok := parentOutputs[outputName]; ok {
+			parentOutput := parent.outputs[i]
+			if outputConfig.Writer == "" {
+				output = parentOutput.WithWriter(parentOutput.writer.WithName(loggerName))
+			} else {
+				writer, err := context.getWriter(outputConfig.Writer)
+				if err != nil {
+					return nil, err
+				}
+				output = parentOutput.WithWriter(writer.WithName(loggerName))
+			}
+			level := outputConfig.Level.Level()
+			if level != EmptyLevel {
+				output = output.WithLevel(level)
+			}
+		} else {
 			writer, err := context.getWriter(outputConfig.Writer)
 			if err != nil {
 				return nil, err
 			}
-			outputs = append(outputs, newOutput(name, writer, outputConfig.Level.Level(), &allSampler{}))
+			output = newOutput(outputName, writer.WithName(loggerName), outputConfig.Level.Level(), &allSampler{})
 		}
-	}
 
-	logger := &dazlLogger{
-		loggerContext: &loggerContext{
-			loggingContext: context,
-			config:         config.RootLogger,
-		},
-		outputs: outputs,
-	}
-	if config.RootLogger.Level != nil {
-		logger.level.Store(int32(config.RootLogger.Level.Level()))
+		// Configure sampling for the output, first adding the logger sampling and then
+		// output sampling configurations.
+		var err error
+		output, err = configureSampling(output, loggerConfig.Sample)
+		if err != nil {
+			return nil, err
+		}
+		output, err = configureSampling(output, outputConfig.Sample)
+		if err != nil {
+			return nil, err
+		}
+		logger.outputs = append(logger.outputs, output)
 	}
 	return logger, nil
 }
@@ -213,7 +261,6 @@ func (c *loggingContext) getWriter(name string) (Writer, error) {
 
 type loggerContext struct {
 	*loggingContext
-	config       loggerConfig
 	name         string
 	path         []string
 	children     sync.Map
@@ -259,7 +306,7 @@ func (l *dazlLogger) Name() string {
 
 func (l *dazlLogger) GetLogger(path string) Logger {
 	if path == "" {
-		return l
+		panic("logger path must not be empty")
 	}
 	logger := l
 	names := strings.Split(path, pathSep)
@@ -287,107 +334,11 @@ func (l *dazlLogger) getChild(name string) (*dazlLogger, error) {
 		return child.(*dazlLogger), nil
 	}
 
-	path := append(l.path, name)
-	fullName := strings.Join(path, pathSep)
-
-	var outputs []*dazlOutput
-	outputNames := make(map[string]int)
-	for i, output := range l.outputs {
-		outputNames[output.Name()] = i
+	logger, err := newLogger(l.loggingContext, l, name)
+	if err != nil {
+		return nil, err
 	}
 
-	// Initialize the child logger's configuration if one is not set.
-	config, ok := l.loggingContext.config.getLogger(fullName)
-	if ok {
-		for outputName, outputConfig := range config.getOutputs() {
-			// If the configured output already exists, create a child output that inherits the
-			// parent's level and sampling configuration. Otherwise, create a new output.
-			var output *dazlOutput
-			if i, ok := outputNames[outputName]; ok {
-				parent := outputs[i]
-				if outputConfig.Writer == "" {
-					output = parent.WithWriter(parent.writer.WithName(fullName))
-				} else {
-					writer, err := l.getWriter(outputConfig.Writer)
-					if err != nil {
-						return nil, err
-					}
-					output = parent.WithWriter(writer.WithName(fullName))
-				}
-				level := outputConfig.Level.Level()
-				if level != EmptyLevel {
-					output = output.WithLevel(level)
-				}
-				outputs[i] = output
-			} else {
-				writer, err := l.getWriter(outputConfig.Writer)
-				if err != nil {
-					return nil, err
-				}
-				output = newOutput(outputName, writer.WithName(fullName), outputConfig.Level.Level(), &allSampler{})
-				outputs = append(outputs, output)
-			}
-
-			// If sampling is configured for the output, add the sampler to the output's underlying writer
-			// and remove any configured samplers from the output.
-			// If the writer does not support the configured sampling strategy, add a sampler to the output.
-			if outputConfig.Sample != nil {
-				if outputConfig.Sample.Basic != nil {
-					if samplingWriter, ok := output.Writer().(BasicSamplingWriter); ok {
-						writer, err := samplingWriter.WithBasicSampler(outputConfig.Sample.Basic.Interval, outputConfig.Sample.Basic.Level.Level())
-						if err != nil {
-							return nil, err
-						}
-						output = output.WithWriter(writer).WithSampler(&allSampler{})
-					} else {
-						output = output.WithSampler(&basicSampler{
-							Interval: uint32(outputConfig.Sample.Basic.Interval),
-							Level:    outputConfig.Sample.Basic.Level.Level(),
-						})
-					}
-				} else if outputConfig.Sample.Random != nil {
-					if samplingWriter, ok := output.Writer().(RandomSamplingWriter); ok {
-						writer, err := samplingWriter.WithRandomSampler(outputConfig.Sample.Random.Interval, outputConfig.Sample.Random.Level.Level())
-						if err != nil {
-							return nil, err
-						}
-						output = output.WithWriter(writer).WithSampler(&allSampler{})
-					} else {
-						output = output.WithSampler(randomSampler{
-							Interval: outputConfig.Sample.Random.Interval,
-							Level:    outputConfig.Sample.Random.Level.Level(),
-						})
-					}
-				}
-			}
-		}
-	}
-
-	defaultLevel := Level(l.defaultLevel.Load())
-	parentLevel := Level(l.level.Load())
-	if parentLevel != EmptyLevel {
-		defaultLevel = parentLevel
-	}
-
-	// Create the child logger.
-	logger := &dazlLogger{
-		loggerContext: &loggerContext{
-			loggingContext: l.loggingContext,
-			config:         config,
-			name:           fullName,
-			path:           path,
-		},
-		outputs: outputs,
-	}
-
-	// Set the logger level.
-	logger.defaultLevel.Store(int32(defaultLevel))
-	level := config.Level.Level()
-	if level != EmptyLevel {
-		logger.SetLevel(level)
-	}
-
-	// Cache the child logger.
 	l.children.Store(name, logger)
 	return logger, nil
 }
@@ -563,4 +514,42 @@ func (c *loggerConfig) getOutputs() map[string]outputConfig {
 func (c *loggerConfig) getOutput(name string) (outputConfig, bool) {
 	config, ok := c.getOutputs()[name]
 	return config, ok
+}
+
+func configureSampling(output *dazlOutput, config *samplingConfig) (*dazlOutput, error) {
+	if config == nil {
+		return output, nil
+	}
+
+	// If sampling is configured for the output, add the sampler to the output's underlying writer
+	// and remove any configured samplers from the output.
+	// If the writer does not support the configured sampling strategy, add a sampler to the output.
+	if config.Basic != nil {
+		if samplingWriter, ok := output.Writer().(BasicSamplingWriter); ok {
+			writer, err := samplingWriter.WithBasicSampler(config.Basic.Interval, config.Basic.Level.Level())
+			if err != nil {
+				return nil, err
+			}
+			output = output.WithWriter(writer).WithSampler(&allSampler{})
+		} else {
+			output = output.WithSampler(&basicSampler{
+				Interval: uint32(config.Basic.Interval),
+				Level:    config.Basic.Level.Level(),
+			})
+		}
+	} else if config.Random != nil {
+		if samplingWriter, ok := output.Writer().(RandomSamplingWriter); ok {
+			writer, err := samplingWriter.WithRandomSampler(config.Random.Interval, config.Random.Level.Level())
+			if err != nil {
+				return nil, err
+			}
+			output = output.WithWriter(writer).WithSampler(&allSampler{})
+		} else {
+			output = output.WithSampler(randomSampler{
+				Interval: config.Random.Interval,
+				Level:    config.Random.Level.Level(),
+			})
+		}
+	}
+	return output, nil
 }

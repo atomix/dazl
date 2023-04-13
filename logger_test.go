@@ -10,7 +10,7 @@ import (
 )
 
 func TestLoggerNames(t *testing.T) {
-	assert.Equal(t, "", GetRootLogger().Name())
+	assert.Equal(t, "", root.Name())
 	assert.Equal(t, "", GetLogger("").Name())
 	assert.Equal(t, "foo", GetLogger("foo").Name())
 	assert.Equal(t, "foo/bar", GetLogger("foo/bar").Name())
@@ -18,7 +18,6 @@ func TestLoggerNames(t *testing.T) {
 }
 
 func TestSetLevel(t *testing.T) {
-	root := GetRootLogger()
 	parent := GetLogger("parent")
 	child := parent.GetLogger("child")
 

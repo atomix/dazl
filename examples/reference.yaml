@@ -102,11 +102,13 @@ rootLogger:
   level: debug
   # 'sample' is the sampling configuration for this logger. By defaut, all messages
   # are logged by the logger.
-  #   - 'counting' configures the counting sampler
-  #     - 'count' configures the sampler to write every n messages to the output
-  #     - 'level' is the level at/above which messages will be sampled
+  #   - 'basic' configures the basic sampler
+  #     - 'interval' configures the sampler to write every n messages to the output
+  #     - 'minLevel' is the minimum level at which messages will be sampled
   #   - 'random' configures the random sampler
-  #     - 'level' is the level at/above which messages will be sampled
+  #     - 'interval' configures the average frequency of samples where sampling will occur at a mean
+  #       rate of 1/interval
+  #     - 'minLevel' is the minimum level at which messages will be sampled
   sample: random
   outputs:
     stdout:
@@ -120,9 +122,9 @@ rootLogger:
       #   - 'random' configures the random sampler
       #     - 'level' is the level at/above which messages will be sampled
       sample:
-        counting:
-          count: 10
-          level: info
+        basic:
+          interval: 10
+          minLevel: info
     file:
       writer: file
 
@@ -132,5 +134,5 @@ loggers:
   github.com/atomix/dazl:
     level: info
     sample:
-      counting:
-        count: 10
+      basic:
+        interval: 10
