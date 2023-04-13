@@ -4,96 +4,133 @@
 
 # This file serves as a reference for configuration options supported by dazl.
 
-# 'sinks' is a set of named sinks for loggers to write to.
-# Each sink must have a 'path' and 'encoding'.
-# - 'path' is either 'stdout', 'stderr', a local file system path, or a remote URL for a configured zap sink.
-# - 'encoding' is either 'console' or 'json'
-sinks:
+# The configuration for log message encoders
+encoders:
+  # - The configuration for the console encoder
+  console:
+    # A list of fields to include
+    # String fields enable the field without changing the default name or format
+    # To override the defaults, use an object.
+    # Available fields: name, level, time, caller, and stacktrace
+    fields:
+      # The log message
+      - message
+      # The logger name
+      - name
+      # The log level
+      - level:
+          # The level format: 'uppercase' or 'lowercase'
+          format: uppercase
+      # The time at which the message was logged
+      - time:
+          # The time format: 'iso8601' or 'unix'
+          format: iso8601
+      # The line of code at which the message was logged
+      - caller:
+          # The caller format: 'short' or 'long'
+          format: short
+      # The log stacktrace
+      - stacktrace
+  # - 'json' is the configuration for the JSON encoder
+  json:
+    # A list of fields to include
+    # String fields enable the field without changing the default name or format
+    # To override the defaults, use an object.
+    # Available fields: name, level, time, caller, and stacktrace
+    fields:
+      # The log message
+      - message:
+          # The JSON key for the field
+          key: msg
+      # The logger name
+      - name:
+          # The JSON key for the field
+          key: logger
+      # The log level
+      - level:
+          # The JSON key for the field
+          key: level
+          # The level format: 'uppercase' or 'lowercase'
+          format: uppercase
+      # The time at which the message was logged
+      - time:
+          # The JSON key for the field
+          key: time
+          # The time format: 'iso8601' or 'unix'
+          format: iso8601
+      # The line of code at which the message was logged
+      - caller:
+          # The JSON key for the field
+          key: caller
+          # The caller format: 'short' or 'long'
+          format: short
+      # The log stacktrace
+      - stacktrace:
+          # The JSON key for the field
+          key: trace
+      # The log stacktrace
+      - stacktrace
+
+# A set of named writers for loggers to write to.
+# All writers must specify an 'encoder' to use
+writers:
+  # The stdout writer
   stdout:
-    path: stdout
-    encoding: console
-    levelEncoder: capitalColor
+    # The name of the encoder to use for the writer
+    encoder: console
+  # The stderr writer
   stderr:
-    path: stderr
-    encoding: console
+    # The name of the encoder to use for the writer
+    encoder: console
+  # Remaining writers are files
   file:
+    # The path to the file
     path: ./example.log
-    encoding: json
-    # Encoding options are supported by all sinks
-    levelEncoder: ""
-    messageKey: msg
-    levelKey: lvl
-    timeKey: ts
-    nameKey: pkg
+    # The name of the encoder to use for the writer
+    encoder: json
 
 # 'rootLogger' is the root logger configuration
-# 'level' is the default log level for all loggers
-#   - debug
-#   - info
-#   - warn
-#   - error
-#   - fatal
-#   - panic
-# 'outputs' is a set of references to configured sinks to which to output log messages
+# 'outputs' is a set of references to configured writers to which to output log messages
 rootLogger:
+  # 'level' is the default log level for all loggers
+  #   - debug
+  #   - info
+  #   - warn
+  #   - error
+  #   - fatal
+  #   - panic
   level: debug
+  # 'sample' is the sampling configuration for this logger. By defaut, all messages
+  # are logged by the logger.
+  #   - 'counting' configures the counting sampler
+  #     - 'count' configures the sampler to write every n messages to the output
+  #     - 'level' is the level at/above which messages will be sampled
+  #   - 'random' configures the random sampler
+  #     - 'level' is the level at/above which messages will be sampled
+  sample: random
   outputs:
     stdout:
-      sink: stdout
+      writer: stdout
       level: info
+      # 'sample' is the sampling configuration for this output. By defaut, all messages
+      # are logged to the output.
+      #   - 'counting' configures the counting sampler
+      #     - 'count' configures the sampler to write every n messages to the output
+      #     - 'level' is the level at/above which messages will be sampled
+      #   - 'random' configures the random sampler
+      #     - 'level' is the level at/above which messages will be sampled
+      sample:
+        counting:
+          count: 10
+          level: info
     file:
-      sink: file
+      writer: file
 
-# The keys configure the field names to use for log metadata.
-messageKey: message
-levelKey: level
-timeKey: timestamp
-nameKey: logger
-callerKey: caller
-stacktraceKey: trace
-
-# Additional options for log outputs
-skipLineEnding: false
-lineEnding: ""
-
-# levelEncoder is the default encoder to use for log levels
-#
-# Options:
-# - capital (upper-case)
-# - capitalColor (upper-case color-coded)
-# - color (lower-case color-coded)
-# - "" (lower-case)
-levelEncoder: ""
-
-# timeEncoder is the default encoder to use for timestamps
-#
-# Options:
-# - rfc3339nano
-# - RFC3339Nano
-# - rfc3339
-# - RFC3339
-# - iso8601
-# - ISO8601
-# - millis
-# - nanos
-timeEncoder: ISO8601
-
-# durationEncoder is the default encoder to use for durations
-#
-# Options:
-# - string
-# - nanos
-# - ms
-durationEncoder: string
-
-# callerEncoder is the default encoder to use for the caller info
-#
-# Options:
-# - full
-callerEncoder: full
-
-# nameEncoder is the default encoder to use for the logger name
-#
-# Options:
-# - full
-nameEncoder: full
+# 'loggers' is a mapping of logger paths to their configuration.
+# All loggers inherit their default configuration from the 'rootLogger'.
+loggers:
+  github.com/atomix/dazl:
+    level: info
+    sample:
+      counting:
+        count: 10
