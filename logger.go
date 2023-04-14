@@ -10,7 +10,6 @@ import (
 	"runtime"
 	"strings"
 	"sync"
-	"sync/atomic"
 )
 
 var root Logger
@@ -38,12 +37,6 @@ type Logger interface {
 
 	// GetLogger gets a descendant of this Logger
 	GetLogger(path string) Logger
-
-	// Level returns the logger's level
-	Level() Level
-
-	// SetLevel sets the logger's level
-	SetLevel(level Level)
 
 	// WithFields adds fields to the logger
 	WithFields(fields ...Field) Logger
@@ -74,11 +67,6 @@ type Logger interface {
 	Panic(...interface{})
 	Panicf(format string, args ...interface{})
 	Panicw(msg string, fields ...Field)
-}
-
-// SetLevel sets the root logger level
-func SetLevel(level Level) {
-	root.SetLevel(level)
 }
 
 // getCallerPackage gets the package name of the calling function'ss caller
@@ -126,16 +114,15 @@ func newLogger(context *loggingContext, parent *dazlLogger, name string) (*dazlL
 	// Configure the logger's outputs from the configuration
 	loggerConfig, _ := context.config.getLogger(loggerName)
 	if parent != nil {
-		defaultLevel := Level(parent.defaultLevel.Load())
-		parentLevel := Level(parent.level.Load())
-		if parentLevel != EmptyLevel {
-			defaultLevel = parentLevel
+		if parent.level != EmptyLevel {
+			logger.defaultLevel = parent.level
+		} else {
+			logger.defaultLevel = parent.defaultLevel
 		}
-		logger.defaultLevel.Store(int32(defaultLevel))
 	}
 	level := loggerConfig.Level.Level()
 	if level != EmptyLevel {
-		logger.SetLevel(level)
+		logger.level = level
 	}
 
 	for _, outputConfig := range loggerConfig.Outputs {
@@ -259,34 +246,8 @@ type loggerContext struct {
 	path         []string
 	children     sync.Map
 	mu           sync.Mutex
-	level        atomic.Int32
-	defaultLevel atomic.Int32
-}
-
-func (l *loggerContext) Level() Level {
-	level := Level(l.level.Load())
-	if level != EmptyLevel {
-		return level
-	}
-	return Level(l.defaultLevel.Load())
-}
-
-func (l *loggerContext) SetLevel(level Level) {
-	l.level.Store(int32(level))
-	l.children.Range(func(key, value any) bool {
-		value.(*dazlLogger).setDefaultLevel(level)
-		return true
-	})
-}
-
-func (l *loggerContext) setDefaultLevel(level Level) {
-	l.defaultLevel.Store(int32(level))
-	if Level(l.level.Load()) == EmptyLevel {
-		l.children.Range(func(key, value any) bool {
-			value.(*dazlLogger).setDefaultLevel(level)
-			return true
-		})
-	}
+	level        Level
+	defaultLevel Level
 }
 
 type dazlLogger struct {
@@ -296,6 +257,13 @@ type dazlLogger struct {
 
 func (l *dazlLogger) Name() string {
 	return l.name
+}
+
+func (l *dazlLogger) Level() Level {
+	if l.level != EmptyLevel {
+		return l.level
+	}
+	return l.defaultLevel
 }
 
 func (l *dazlLogger) GetLogger(path string) Logger {
