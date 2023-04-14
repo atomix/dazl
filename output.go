@@ -4,15 +4,57 @@
 
 package dazl
 
+import (
+	"fmt"
+	"gopkg.in/yaml.v3"
+)
+
 type outputConfig struct {
-	Writer string          `json:"writer" yaml:"writer"`
-	Level  *levelConfig    `json:"level" yaml:"level"`
-	Sample *samplingConfig `json:"sample" yaml:"sample"`
+	Writer string         `json:"writer" yaml:"writer"`
+	Level  levelConfig    `json:"level" yaml:"level"`
+	Sample samplingConfig `json:"sample" yaml:"sample"`
 }
 
-func newOutput(name string, writer Writer, level Level, sampler Sampler) *dazlOutput {
+func (c *outputConfig) UnmarshalYAML(unmarshal func(any) error) error {
+	config := make(map[string]any)
+	if err := unmarshal(&config); err != nil {
+		var text string
+		if err := unmarshal(&text); err != nil {
+			return err
+		}
+		return c.UnmarshalText([]byte(text))
+	}
+	if len(config) > 1 {
+		return fmt.Errorf("logger outputs must configure one writer per list item")
+	}
+	for key, value := range config {
+		text, err := yaml.Marshal(value)
+		if err != nil {
+			return err
+		}
+		var schema outputSchema
+		if err := yaml.Unmarshal(text, &schema); err != nil {
+			return err
+		}
+		c.Writer = key
+		c.Level = schema.Level
+		c.Sample = schema.Sample
+	}
+	return nil
+}
+
+func (c *outputConfig) UnmarshalText(text []byte) error {
+	c.Writer = string(text)
+	return nil
+}
+
+type outputSchema struct {
+	Level  levelConfig    `json:"level" yaml:"level"`
+	Sample samplingConfig `json:"sample" yaml:"sample"`
+}
+
+func newOutput(writer Writer, level Level, sampler Sampler) *dazlOutput {
 	return &dazlOutput{
-		name:    name,
 		writer:  writer,
 		level:   level,
 		sampler: sampler,
@@ -21,7 +63,6 @@ func newOutput(name string, writer Writer, level Level, sampler Sampler) *dazlOu
 
 // dazlOutput is a dazl output implementation
 type dazlOutput struct {
-	name    string
 	writer  Writer
 	level   Level
 	sampler Sampler
@@ -33,7 +74,6 @@ func (o *dazlOutput) Writer() Writer {
 
 func (o *dazlOutput) WithWriter(writer Writer) *dazlOutput {
 	return &dazlOutput{
-		name:    o.name,
 		writer:  writer,
 		level:   o.level,
 		sampler: o.sampler,
@@ -46,7 +86,6 @@ func (o *dazlOutput) Level() Level {
 
 func (o *dazlOutput) WithLevel(level Level) *dazlOutput {
 	return &dazlOutput{
-		name:    o.name,
 		writer:  o.writer,
 		level:   level,
 		sampler: o.sampler,
@@ -55,7 +94,6 @@ func (o *dazlOutput) WithLevel(level Level) *dazlOutput {
 
 func (o *dazlOutput) WithSampler(sampler Sampler) *dazlOutput {
 	return &dazlOutput{
-		name:    o.name,
 		writer:  o.writer,
 		level:   o.level,
 		sampler: sampler,

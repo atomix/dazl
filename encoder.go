@@ -17,8 +17,8 @@ const (
 )
 
 type encodersConfig struct {
-	Console *encoderConfig `json:"console" yaml:"console"`
-	JSON    *encoderConfig `json:"json" yaml:"json"`
+	Console encoderConfig `json:"console" yaml:"console"`
+	JSON    encoderConfig `json:"json" yaml:"json"`
 }
 
 type encoderConfig struct {

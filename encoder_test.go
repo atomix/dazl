@@ -26,7 +26,7 @@ json:
     - time:
         key: timestamp
     - caller:
-        format: long
+        format: full
 `
 
 func TestUnmarshalEncoders(t *testing.T) {

@@ -17,15 +17,6 @@ var root Logger
 
 const pathSep = "/"
 
-func init() {
-	var config loggingConfig
-	if err := load(&config); err != nil {
-		panic(err)
-	} else if err := configure(config); err != nil {
-		panic(err)
-	}
-}
-
 // GetPackageLogger gets the logger for the current package.
 func GetPackageLogger() Logger {
 	pkg, ok := getCallerPackage()
@@ -134,12 +125,7 @@ func newLogger(context *loggingContext, parent *dazlLogger, name string) (*dazlL
 
 	// Configure the logger's outputs from the configuration
 	loggerConfig, _ := context.config.getLogger(loggerName)
-	parentOutputs := make(map[string]int)
 	if parent != nil {
-		for i, output := range parent.outputs {
-			parentOutputs[output.name] = i
-		}
-
 		defaultLevel := Level(parent.defaultLevel.Load())
 		parentLevel := Level(parent.level.Load())
 		if parentLevel != EmptyLevel {
@@ -147,35 +133,43 @@ func newLogger(context *loggingContext, parent *dazlLogger, name string) (*dazlL
 		}
 		logger.defaultLevel.Store(int32(defaultLevel))
 	}
-	if loggerConfig.Level != nil {
-		logger.SetLevel(loggerConfig.Level.Level())
+	level := loggerConfig.Level.Level()
+	if level != EmptyLevel {
+		logger.SetLevel(level)
 	}
 
-	for outputName, outputConfig := range loggerConfig.getOutputs() {
+	for _, outputConfig := range loggerConfig.Outputs {
 		// If the configured output already exists, create a child output that inherits the
 		// parent's level and sampling configuration. Otherwise, create a new output.
 		var output *dazlOutput
-		if i, ok := parentOutputs[outputName]; ok {
-			parentOutput := parent.outputs[i]
-			if outputConfig.Writer == "" {
-				output = parentOutput.WithWriter(parentOutput.writer.WithName(loggerName))
+		if parent != nil {
+			if parentOutput, ok := parent.outputs[outputConfig.Writer]; ok {
+				if outputConfig.Writer == "" {
+					output = parentOutput.WithWriter(parentOutput.writer.WithName(loggerName))
+				} else {
+					writer, err := context.getWriter(outputConfig.Writer)
+					if err != nil {
+						return nil, err
+					}
+					output = parentOutput.WithWriter(writer.WithName(loggerName))
+				}
+				level := outputConfig.Level.Level()
+				if level != EmptyLevel {
+					output = output.WithLevel(level)
+				}
 			} else {
 				writer, err := context.getWriter(outputConfig.Writer)
 				if err != nil {
 					return nil, err
 				}
-				output = parentOutput.WithWriter(writer.WithName(loggerName))
-			}
-			level := outputConfig.Level.Level()
-			if level != EmptyLevel {
-				output = output.WithLevel(level)
+				output = newOutput(writer.WithName(loggerName), outputConfig.Level.Level(), &allSampler{})
 			}
 		} else {
 			writer, err := context.getWriter(outputConfig.Writer)
 			if err != nil {
 				return nil, err
 			}
-			output = newOutput(outputName, writer.WithName(loggerName), outputConfig.Level.Level(), &allSampler{})
+			output = newOutput(writer.WithName(loggerName), outputConfig.Level.Level(), &allSampler{})
 		}
 
 		// Configure sampling for the output, first adding the logger sampling and then
@@ -189,7 +183,7 @@ func newLogger(context *loggingContext, parent *dazlLogger, name string) (*dazlL
 		if err != nil {
 			return nil, err
 		}
-		logger.outputs = append(logger.outputs, output)
+		logger.outputs[outputConfig.Writer] = output
 	}
 	return logger, nil
 }
@@ -297,7 +291,7 @@ func (l *loggerContext) setDefaultLevel(level Level) {
 
 type dazlLogger struct {
 	*loggerContext
-	outputs []*dazlOutput
+	outputs map[string]*dazlOutput
 }
 
 func (l *dazlLogger) Name() string {
@@ -344,8 +338,8 @@ func (l *dazlLogger) getChild(name string) (*dazlLogger, error) {
 }
 
 func (l *dazlLogger) WithFields(fields ...Field) Logger {
-	outputs := make([]*dazlOutput, len(l.outputs))
-	for i, output := range l.outputs {
+	outputs := make(map[string]*dazlOutput)
+	for name, output := range l.outputs {
 		writer := output.Writer()
 		var err error
 		for _, field := range fields {
@@ -353,7 +347,7 @@ func (l *dazlLogger) WithFields(fields ...Field) Logger {
 				panic(err)
 			}
 		}
-		outputs[i] = output.WithWriter(writer)
+		outputs[name] = output.WithWriter(writer)
 	}
 	return &dazlLogger{
 		loggerContext: l.loggerContext,
@@ -362,12 +356,12 @@ func (l *dazlLogger) WithFields(fields ...Field) Logger {
 }
 
 func (l *dazlLogger) WithSkipCalls(calls int) Logger {
-	outputs := make([]*dazlOutput, len(l.outputs))
-	for i, output := range l.outputs {
+	outputs := make(map[string]*dazlOutput)
+	for name, output := range l.outputs {
 		if writer, ok := output.Writer().(CallSkippingWriter); ok {
-			outputs[i] = output.WithWriter(writer.WithSkipCalls(calls))
+			outputs[name] = output.WithWriter(writer.WithSkipCalls(calls))
 		} else {
-			outputs[i] = output
+			outputs[name] = output
 		}
 	}
 	return &dazlLogger{
@@ -499,28 +493,12 @@ func (l *dazlLogger) Panicw(msg string, fields ...Field) {
 var _ Logger = &dazlLogger{}
 
 type loggerConfig struct {
-	Level   *levelConfig            `json:"level" yaml:"level"`
-	Sample  *samplingConfig         `json:"sample" yaml:"sample"`
-	Outputs map[string]outputConfig `json:"outputs" yaml:"outputs"`
+	Level   levelConfig    `json:"level" yaml:"level"`
+	Sample  samplingConfig `json:"sample" yaml:"sample"`
+	Outputs []outputConfig `json:"outputs" yaml:"outputs"`
 }
 
-func (c *loggerConfig) getOutputs() map[string]outputConfig {
-	if c.Outputs == nil {
-		return map[string]outputConfig{}
-	}
-	return c.Outputs
-}
-
-func (c *loggerConfig) getOutput(name string) (outputConfig, bool) {
-	config, ok := c.getOutputs()[name]
-	return config, ok
-}
-
-func configureSampling(output *dazlOutput, config *samplingConfig) (*dazlOutput, error) {
-	if config == nil {
-		return output, nil
-	}
-
+func configureSampling(output *dazlOutput, config samplingConfig) (*dazlOutput, error) {
 	// If sampling is configured for the output, add the sampler to the output's underlying writer
 	// and remove any configured samplers from the output.
 	// If the writer does not support the configured sampling strategy, add a sampler to the output.
