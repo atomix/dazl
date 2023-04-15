@@ -117,11 +117,6 @@ func TestLogger(t *testing.T) {
 	console := NewMockEncoder(ctrl)
 	json := NewMockEncoder(ctrl)
 
-	Register(&testFramework{
-		console: console,
-		json:    json,
-	})
-
 	stdout := NewMockWriter(ctrl)
 	file := NewMockWriter(ctrl)
 
@@ -146,9 +141,14 @@ func TestLogger(t *testing.T) {
 	json.EXPECT().WithStacktraceEnabled().Return(json, nil)
 	json.EXPECT().WithStacktraceKey(gomock.Eq("trace")).Return(json, nil)
 
+	framework := &testFramework{
+		console: console,
+		json:    json,
+	}
+
 	var config loggingConfig
 	assert.NoError(t, yaml.Unmarshal([]byte(testConfig), &config))
-	assert.NoError(t, configure(config))
+	assert.NoError(t, configure(framework, config))
 
 	var log = root
 

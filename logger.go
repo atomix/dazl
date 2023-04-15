@@ -14,6 +14,17 @@ import (
 
 var root Logger
 
+func init() {
+	logger, err := newLogger(&loggingContext{
+		framework: &defaultFramework{},
+		encoders:  map[Encoding]Encoder{},
+	}, nil, "")
+	if err != nil {
+		panic(err)
+	}
+	root = logger
+}
+
 const pathSep = "/"
 
 // GetPackageLogger gets the logger for the current package.
@@ -85,8 +96,8 @@ func getCallerPackage() (string, bool) {
 	return pkg, true
 }
 
-func configure(config loggingConfig) error {
-	context, err := newLoggingContext(config)
+func configure(framework Framework, config loggingConfig) error {
+	context, err := newLoggingContext(framework, config)
 	if err != nil {
 		return err
 	}
@@ -208,8 +219,7 @@ func newLogger(context *loggingContext, parent *dazlLogger, name string) (*dazlL
 	return logger, nil
 }
 
-func newLoggingContext(config loggingConfig) (*loggingContext, error) {
-	framework := getFramework()
+func newLoggingContext(framework Framework, config loggingConfig) (*loggingContext, error) {
 	encoders := make(map[Encoding]Encoder)
 	if consoleEncodingFramework, ok := framework.(ConsoleEncodingFramework); ok {
 		encoder, err := configureConsoleEncoder(config.Encoders.Console, consoleEncodingFramework.ConsoleEncoder())
@@ -226,16 +236,18 @@ func newLoggingContext(config loggingConfig) (*loggingContext, error) {
 		encoders[JSONEncoding] = encoder
 	}
 	return &loggingContext{
-		config:   config,
-		encoders: encoders,
+		framework: framework,
+		config:    config,
+		encoders:  encoders,
 	}, nil
 }
 
 type loggingContext struct {
-	config   loggingConfig
-	encoders map[Encoding]Encoder
-	writers  sync.Map
-	mu       sync.Mutex
+	framework Framework
+	config    loggingConfig
+	encoders  map[Encoding]Encoder
+	writers   sync.Map
+	mu        sync.Mutex
 }
 
 func (c *loggingContext) getWriter(name string) (Writer, error) {
@@ -269,7 +281,7 @@ func (c *loggingContext) newWriter(name string) (Writer, error) {
 		}
 		encoder, ok := c.encoders[c.config.Writers.Stdout.Encoder]
 		if !ok {
-			return nil, fmt.Errorf("%s framework does not support %s encoding", getFramework().Name(), c.config.Writers.Stdout.Encoder)
+			return nil, fmt.Errorf("%s framework does not support %s encoding", c.framework.Name(), c.config.Writers.Stdout.Encoder)
 		}
 		return encoder.NewWriter(os.Stdout)
 	case "stderr":
@@ -278,7 +290,7 @@ func (c *loggingContext) newWriter(name string) (Writer, error) {
 		}
 		encoder, ok := c.encoders[c.config.Writers.Stderr.Encoder]
 		if !ok {
-			return nil, fmt.Errorf("%s framework does not support %s encoding", getFramework().Name(), c.config.Writers.Stderr.Encoder)
+			return nil, fmt.Errorf("%s framework does not support %s encoding", c.framework.Name(), c.config.Writers.Stderr.Encoder)
 		}
 		return encoder.NewWriter(os.Stderr)
 	default:
@@ -292,7 +304,7 @@ func (c *loggingContext) newWriter(name string) (Writer, error) {
 		}
 		encoder, ok := c.encoders[config.Encoder]
 		if !ok {
-			return nil, fmt.Errorf("%s framework does not support %s encoding", getFramework().Name(), config.Encoder)
+			return nil, fmt.Errorf("%s framework does not support %s encoding", c.framework.Name(), config.Encoder)
 		}
 		return encoder.NewWriter(file)
 	}

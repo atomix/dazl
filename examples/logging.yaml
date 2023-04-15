@@ -1,0 +1,47 @@
+# SPDX-FileCopyrightText: 2023-present Intel Corporation
+#
+# SPDX-License-Identifier: Apache-2.0
+
+encoders:
+  console:
+    fields:
+      - message
+      - name
+      - level:
+          format: uppercase
+      - timestamp:
+          format: ISO8601
+      - caller:
+          format: short
+      - stacktrace
+  json:
+    fields:
+      - message:
+          key: message
+      - name:
+          key: logger
+      - level:
+          key: level
+          format: lowercase
+      - timestamp:
+          key: time
+          format: ISO8601
+      - caller:
+          key: caller
+          format: short
+      - stacktrace:
+          key: trace
+
+writers:
+  stdout:
+    encoder: console
+  file:
+    path: ./example.log
+    encoder: json
+
+rootLogger:
+  level: debug
+  outputs:
+    - stdout:
+        level: info
+    #- file

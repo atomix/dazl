@@ -5,9 +5,12 @@
 package main
 
 import "github.com/atomix/dazl"
+import _ "github.com/atomix/dazl/zap"
 
 var log = dazl.GetPackageLogger()
 
+const projectName = "dazl"
+
 func main() {
-	log.Info("Hello world!")
+	log.Infof("%s is a logging framework for Go", projectName)
 }

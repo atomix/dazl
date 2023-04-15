@@ -4,22 +4,13 @@
 
 package dazl
 
-import (
-	"sync/atomic"
-)
-
-var globalFramework = &atomic.Pointer[Framework]{}
-
 func Register(framework Framework) {
-	globalFramework.Store(&framework)
-}
-
-func getFramework() Framework {
-	framework := globalFramework.Load()
-	if framework == nil {
-		return &defaultFramework{}
+	var config loggingConfig
+	if err := load(&config); err != nil {
+		panic(err)
+	} else if err := configure(framework, config); err != nil {
+		panic(err)
 	}
-	return *framework
 }
 
 type Framework interface {

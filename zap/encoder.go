@@ -115,9 +115,13 @@ type consoleEncoder struct {
 }
 
 func (e *consoleEncoder) NewWriter(writer io.Writer) (dazl.Writer, error) {
+	if e.config.MessageKey == "" {
+		e.config.MessageKey = "message"
+	}
 	var config zap.Config
 	config.EncoderConfig = e.config
 	config.Encoding = "console"
+	config.Level = zap.NewAtomicLevelAt(zap.DebugLevel)
 	return newWriter(writer, zapcore.NewConsoleEncoder(e.config), config)
 }
 
@@ -144,9 +148,13 @@ type jsonEncoder struct {
 }
 
 func (e *jsonEncoder) NewWriter(writer io.Writer) (dazl.Writer, error) {
+	if e.config.MessageKey == "" {
+		e.config.MessageKey = "message"
+	}
 	var config zap.Config
 	config.EncoderConfig = e.config
 	config.Encoding = "json"
+	config.Level = zap.NewAtomicLevelAt(zap.DebugLevel)
 	return newWriter(writer, zapcore.NewJSONEncoder(e.config), config)
 }
 

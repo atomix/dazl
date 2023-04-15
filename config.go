@@ -32,15 +32,6 @@ func (c *loggingConfig) getLogger(name string) (loggerConfig, bool) {
 	return config, ok
 }
 
-func init() {
-	var config loggingConfig
-	if err := load(&config); err != nil {
-		panic(err)
-	} else if err := configure(config); err != nil {
-		panic(err)
-	}
-}
-
 // load the dazl configuration
 func load(config *loggingConfig) error {
 	bytes, err := os.ReadFile(configFile)

@@ -5,7 +5,6 @@
 package zap
 
 import (
-	"fmt"
 	"github.com/atomix/dazl"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -15,7 +14,7 @@ import (
 
 func newWriter(writer io.Writer, encoder zapcore.Encoder, config zap.Config) (dazl.Writer, error) {
 	logger, err := config.Build(
-		zap.AddCallerSkip(5),
+		zap.AddCallerSkip(3),
 		zap.WrapCore(func(zapcore.Core) zapcore.Core {
 			return zapcore.NewCore(encoder, &writeSyncer{writer}, zap.DebugLevel)
 		}))
@@ -27,17 +26,6 @@ func newWriter(writer io.Writer, encoder zapcore.Encoder, config zap.Config) (da
 		root:   logger,
 		logger: logger,
 	}, nil
-}
-
-func newEncoder(encoding dazl.Encoding, config zapcore.EncoderConfig) (zapcore.Encoder, error) {
-	switch encoding {
-	case dazl.ConsoleEncoding:
-		return zapcore.NewConsoleEncoder(config), nil
-	case dazl.JSONEncoding:
-		return zapcore.NewJSONEncoder(config), nil
-	default:
-		return nil, fmt.Errorf("unknown encoding %s", encoding)
-	}
 }
 
 // Writer is a dazl output implementation
