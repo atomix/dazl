@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"gopkg.in/yaml.v3"
+	"io"
 )
 
 type Encoding string
@@ -17,263 +18,314 @@ const (
 	JSONEncoding    Encoding = "json"
 )
 
-func newEncoder(encoding Encoding, config encodersConfig) encoder {
+type Encoder interface {
+	NewWriter(writer io.Writer) (Writer, error)
+}
+
+type NameEncoder interface {
+	WithNameEnabled() (Encoder, error)
+}
+
+type NameKeyEncoder interface {
+	WithNameKey(key string) (Encoder, error)
+}
+
+type MessageKeyEncoder interface {
+	WithMessageKey(key string) (Encoder, error)
+}
+
+type LevelEncoder interface {
+	WithLevelEnabled() (Encoder, error)
+}
+
+type LevelKeyEncoder interface {
+	WithLevelKey(key string) (Encoder, error)
+}
+
+type LevelFormattingEncoder interface {
+	WithLevelFormat(format LevelFormat) (Encoder, error)
+}
+
+type TimestampEncoder interface {
+	WithTimestampEnabled() (Encoder, error)
+}
+
+type TimestampKeyEncoder interface {
+	WithTimestampKey(key string) (Encoder, error)
+}
+
+type TimestampFormattingEncoder interface {
+	WithTimestampFormat(format TimestampFormat) (Encoder, error)
+}
+
+type CallerEncoder interface {
+	WithCallerEnabled() (Encoder, error)
+}
+
+type CallerKeyEncoder interface {
+	WithCallerKey(key string) (Encoder, error)
+}
+
+type CallerFormattingEncoder interface {
+	WithCallerFormat(format CallerFormat) (Encoder, error)
+}
+
+type StacktraceEncoder interface {
+	WithStacktraceEnabled() (Encoder, error)
+}
+
+type StacktraceKeyEncoder interface {
+	WithStacktraceKey(key string) (Encoder, error)
+}
+
+func newEncoder(config loggingConfig, encoding Encoding) (Encoder, error) {
+	framework := getFramework()
 	switch encoding {
 	case ConsoleEncoding:
-		return &consoleEncoder{
-			config: config.Console,
+		if consoleFramework, ok := framework.(ConsoleEncodingFramework); ok {
+			return configureConsoleEncoder(config.Encoders.Console, consoleFramework.ConsoleEncoder())
 		}
+		return nil, fmt.Errorf("%s framework does not support console encoding", framework.Name())
 	case JSONEncoding:
-		return &jsonEncoder{
-			config: config.JSON,
+		if consoleFramework, ok := framework.(JSONEncodingFramework); ok {
+			return configureJSONEncoder(config.Encoders.Console, consoleFramework.JSONEncoder())
 		}
+		return nil, fmt.Errorf("%s framework does not support JSON encoding", framework.Name())
 	default:
-		panic(fmt.Sprintf("unkown encoding '%s'", encoding))
+		return nil, fmt.Errorf("unkown encoding '%s'", encoding)
 	}
 }
 
-type encoder interface {
-	configure(writer Writer) (Writer, error)
-}
-
-type consoleEncoder struct {
-	config encoderConfig
-}
-
-func (e *consoleEncoder) configure(writer Writer) (Writer, error) {
+func configureConsoleEncoder(config encoderConfig, encoder Encoder) (Encoder, error) {
 	var err error
-	if e.config.Fields.Name != nil {
-		if nameWriter, ok := writer.(NameWriter); ok {
-			writer, err = nameWriter.WithNameEnabled()
+	if config.Fields.Name != nil {
+		if nameEncoder, ok := encoder.(NameEncoder); ok {
+			encoder, err = nameEncoder.WithNameEnabled()
 			if err != nil {
 				return nil, err
 			}
 		} else {
-			return nil, errors.New("level is not an optional field for the configured writer")
+			return nil, errors.New("name is not an optional field for the console encoder")
 		}
 	}
-	if e.config.Fields.Level != nil {
-		if levelWriter, ok := writer.(LevelWriter); ok {
-			writer, err = levelWriter.WithLevelEnabled()
+	if config.Fields.Level != nil {
+		if levelEncoder, ok := encoder.(LevelEncoder); ok {
+			encoder, err = levelEncoder.WithLevelEnabled()
 			if err != nil {
 				return nil, err
 			}
 		} else {
-			return nil, errors.New("level is not an optional field for the configured writer")
+			return nil, errors.New("level is not an optional field for the console encoder")
 		}
-		if e.config.Fields.Level.Format != nil {
-			if levelFormattingWriter, ok := writer.(LevelFormattingWriter); ok {
-				writer, err = levelFormattingWriter.WithLevelFormat(*e.config.Fields.Level.Format)
+		if config.Fields.Level.Format != nil {
+			if levelFormattingEncoder, ok := encoder.(LevelFormattingEncoder); ok {
+				encoder, err = levelFormattingEncoder.WithLevelFormat(*config.Fields.Level.Format)
 				if err != nil {
 					return nil, err
 				}
 			} else {
-				return nil, errors.New("the configured writer does not support configuring level formats")
+				return nil, errors.New("the console encoder does not support configuring level formats")
 			}
 		}
 	}
-	if e.config.Fields.Time != nil {
-		if timestampWriter, ok := writer.(TimestampWriter); ok {
-			writer, err = timestampWriter.WithTimestampEnabled()
+	if config.Fields.Time != nil {
+		if timestampEncoder, ok := encoder.(TimestampEncoder); ok {
+			encoder, err = timestampEncoder.WithTimestampEnabled()
 			if err != nil {
 				return nil, err
 			}
 		} else {
-			return nil, errors.New("time is not an optional field for the configured writer")
+			return nil, errors.New("time is not an optional field for the console encoder")
 		}
-		if e.config.Fields.Time.Format != nil {
-			if timestampFormattingWriter, ok := writer.(TimestampFormattingWriter); ok {
-				writer, err = timestampFormattingWriter.WithTimestampFormat(*e.config.Fields.Time.Format)
+		if config.Fields.Time.Format != nil {
+			if timestampFormattingEncoder, ok := encoder.(TimestampFormattingEncoder); ok {
+				encoder, err = timestampFormattingEncoder.WithTimestampFormat(*config.Fields.Time.Format)
 				if err != nil {
 					return nil, err
 				}
 			} else {
-				return nil, errors.New("the configured writer does not support configuring timestamp formats")
+				return nil, errors.New("the console encoder does not support configuring timestamp formats")
 			}
 		}
 	}
-	if e.config.Fields.Caller != nil {
-		if callerWriter, ok := writer.(CallerWriter); ok {
-			writer, err = callerWriter.WithCallerEnabled()
+	if config.Fields.Caller != nil {
+		if callerEncoder, ok := encoder.(CallerEncoder); ok {
+			encoder, err = callerEncoder.WithCallerEnabled()
 			if err != nil {
 				return nil, err
 			}
 		} else {
-			return nil, errors.New("caller is not an optional field for the configured writer")
+			return nil, errors.New("caller is not an optional field for the console encoder")
 		}
-		if e.config.Fields.Caller.Format != nil {
-			if callerFormattingWriter, ok := writer.(CallerFormattingWriter); ok {
-				writer, err = callerFormattingWriter.WithCallerFormat(*e.config.Fields.Caller.Format)
+		if config.Fields.Caller.Format != nil {
+			if callerFormattingEncoder, ok := encoder.(CallerFormattingEncoder); ok {
+				encoder, err = callerFormattingEncoder.WithCallerFormat(*config.Fields.Caller.Format)
 				if err != nil {
 					return nil, err
 				}
 			} else {
-				return nil, errors.New("the configured writer does not support configuring caller formats")
+				return nil, errors.New("the console encoder does not support configuring caller formats")
 			}
 		}
 	}
-	if e.config.Fields.Stacktrace != nil {
-		if stacktraceWriter, ok := writer.(StacktraceWriter); ok {
-			writer, err = stacktraceWriter.WithStacktraceEnabled()
+	if config.Fields.Stacktrace != nil {
+		if stacktraceEncoder, ok := encoder.(StacktraceEncoder); ok {
+			encoder, err = stacktraceEncoder.WithStacktraceEnabled()
 			if err != nil {
 				return nil, err
 			}
 		} else {
-			return nil, errors.New("stacktrace is not an optional field for the configured writer")
+			return nil, errors.New("stacktrace is not an optional field for the console encoder")
 		}
 	}
-	return writer, nil
+	return encoder, nil
 }
 
-type jsonEncoder struct {
-	config encoderConfig
-}
-
-func (e *jsonEncoder) configure(writer Writer) (Writer, error) {
+func configureJSONEncoder(config encoderConfig, encoder Encoder) (Encoder, error) {
 	var err error
-	if e.config.Fields.Message != nil {
-		if e.config.Fields.Message.Key != "" {
-			if messageKeyWriter, ok := writer.(MessageKeyWriter); ok {
-				writer, err = messageKeyWriter.WithMessageKey(e.config.Fields.Message.Key)
+	if config.Fields.Message != nil {
+		if config.Fields.Message.Key != "" {
+			if messageKeyEncoder, ok := encoder.(MessageKeyEncoder); ok {
+				encoder, err = messageKeyEncoder.WithMessageKey(config.Fields.Message.Key)
 				if err != nil {
 					return nil, err
 				}
 			} else {
-				return nil, errors.New("the configured writer does not support configuring message keys")
+				return nil, errors.New("the JSON encoder does not support configuring message keys")
 			}
 		}
 	}
-	if e.config.Fields.Name != nil {
-		if nameWriter, ok := writer.(NameWriter); ok {
-			writer, err = nameWriter.WithNameEnabled()
+	if config.Fields.Name != nil {
+		if nameEncoder, ok := encoder.(NameEncoder); ok {
+			encoder, err = nameEncoder.WithNameEnabled()
 			if err != nil {
 				return nil, err
 			}
 		} else {
-			return nil, errors.New("name is not an optional field for the configured writer")
+			return nil, errors.New("name is not an optional field for the JSON encoder")
 		}
-		if e.config.Fields.Name.Key != "" {
-			if nameKeyWriter, ok := writer.(NameKeyWriter); ok {
-				writer, err = nameKeyWriter.WithNameKey(e.config.Fields.Name.Key)
+		if config.Fields.Name.Key != "" {
+			if nameKeyEncoder, ok := encoder.(NameKeyEncoder); ok {
+				encoder, err = nameKeyEncoder.WithNameKey(config.Fields.Name.Key)
 				if err != nil {
 					return nil, err
 				}
 			} else {
-				return nil, errors.New("the configured writer does not support configuring name keys")
+				return nil, errors.New("the JSON encoder does not support configuring name keys")
 			}
 		}
 	}
-	if e.config.Fields.Level != nil {
-		if levelWriter, ok := writer.(LevelWriter); ok {
-			writer, err = levelWriter.WithLevelEnabled()
+	if config.Fields.Level != nil {
+		if levelEncoder, ok := encoder.(LevelEncoder); ok {
+			encoder, err = levelEncoder.WithLevelEnabled()
 			if err != nil {
 				return nil, err
 			}
 		} else {
-			return nil, errors.New("level is not an optional field for the configured writer")
+			return nil, errors.New("level is not an optional field for the JSON encoder")
 		}
-		if e.config.Fields.Level.Key != "" {
-			if levelKeyWriter, ok := writer.(LevelKeyWriter); ok {
-				writer, err = levelKeyWriter.WithLevelKey(e.config.Fields.Level.Key)
+		if config.Fields.Level.Key != "" {
+			if levelKeyEncoder, ok := encoder.(LevelKeyEncoder); ok {
+				encoder, err = levelKeyEncoder.WithLevelKey(config.Fields.Level.Key)
 				if err != nil {
 					return nil, err
 				}
 			} else {
-				return nil, errors.New("the configured writer does not support configuring level keys")
+				return nil, errors.New("the JSON encoder does not support configuring level keys")
 			}
 		}
-		if e.config.Fields.Level.Format != nil {
-			if levelFormattingWriter, ok := writer.(LevelFormattingWriter); ok {
-				writer, err = levelFormattingWriter.WithLevelFormat(*e.config.Fields.Level.Format)
+		if config.Fields.Level.Format != nil {
+			if levelFormattingEncoder, ok := encoder.(LevelFormattingEncoder); ok {
+				encoder, err = levelFormattingEncoder.WithLevelFormat(*config.Fields.Level.Format)
 				if err != nil {
 					return nil, err
 				}
 			} else {
-				return nil, errors.New("the configured writer does not support configuring level formats")
+				return nil, errors.New("the JSON encoder does not support configuring level formats")
 			}
 		}
 	}
-	if e.config.Fields.Time != nil {
-		if timestampWriter, ok := writer.(TimestampWriter); ok {
-			writer, err = timestampWriter.WithTimestampEnabled()
+	if config.Fields.Time != nil {
+		if timestampEncoder, ok := encoder.(TimestampEncoder); ok {
+			encoder, err = timestampEncoder.WithTimestampEnabled()
 			if err != nil {
 				return nil, err
 			}
 		} else {
-			return nil, errors.New("timestamp is not an optional field for the configured writer")
+			return nil, errors.New("timestamp is not an optional field for the JSON encoder")
 		}
-		if e.config.Fields.Time.Key != "" {
-			if timestampKeyWriter, ok := writer.(TimestampKeyWriter); ok {
-				writer, err = timestampKeyWriter.WithTimestampKey(e.config.Fields.Time.Key)
+		if config.Fields.Time.Key != "" {
+			if timestampKeyEncoder, ok := encoder.(TimestampKeyEncoder); ok {
+				encoder, err = timestampKeyEncoder.WithTimestampKey(config.Fields.Time.Key)
 				if err != nil {
 					return nil, err
 				}
 			} else {
-				return nil, errors.New("the configured writer does not support configuring timestamp keys")
+				return nil, errors.New("the JSON encoder does not support configuring timestamp keys")
 			}
 		}
-		if e.config.Fields.Time.Format != nil {
-			if timestampFormattingWriter, ok := writer.(TimestampFormattingWriter); ok {
-				writer, err = timestampFormattingWriter.WithTimestampFormat(*e.config.Fields.Time.Format)
+		if config.Fields.Time.Format != nil {
+			if timestampFormattingEncoder, ok := encoder.(TimestampFormattingEncoder); ok {
+				encoder, err = timestampFormattingEncoder.WithTimestampFormat(*config.Fields.Time.Format)
 				if err != nil {
 					return nil, err
 				}
 			} else {
-				return nil, errors.New("the configured writer does not support configuring timestamp formats")
+				return nil, errors.New("the JSON encoder does not support configuring timestamp formats")
 			}
 		}
 	}
-	if e.config.Fields.Caller != nil {
-		if callerWriter, ok := writer.(CallerWriter); ok {
-			writer, err = callerWriter.WithCallerEnabled()
+	if config.Fields.Caller != nil {
+		if callerEncoder, ok := encoder.(CallerEncoder); ok {
+			encoder, err = callerEncoder.WithCallerEnabled()
 			if err != nil {
 				return nil, err
 			}
 		} else {
-			return nil, errors.New("caller is not an optional field for the configured writer")
+			return nil, errors.New("caller is not an optional field for the JSON encoder")
 		}
-		if e.config.Fields.Caller.Key != "" {
-			if callerKeyWriter, ok := writer.(CallerKeyWriter); ok {
-				writer, err = callerKeyWriter.WithCallerKey(e.config.Fields.Caller.Key)
+		if config.Fields.Caller.Key != "" {
+			if callerKeyEncoder, ok := encoder.(CallerKeyEncoder); ok {
+				encoder, err = callerKeyEncoder.WithCallerKey(config.Fields.Caller.Key)
 				if err != nil {
 					return nil, err
 				}
 			} else {
-				return nil, errors.New("the configured writer does not support configuring caller keys")
+				return nil, errors.New("the JSON encoder does not support configuring caller keys")
 			}
 		}
-		if e.config.Fields.Caller.Format != nil {
-			if callerFormattingWriter, ok := writer.(CallerFormattingWriter); ok {
-				writer, err = callerFormattingWriter.WithCallerFormat(*e.config.Fields.Caller.Format)
+		if config.Fields.Caller.Format != nil {
+			if callerFormattingEncoder, ok := encoder.(CallerFormattingEncoder); ok {
+				encoder, err = callerFormattingEncoder.WithCallerFormat(*config.Fields.Caller.Format)
 				if err != nil {
 					return nil, err
 				}
 			} else {
-				return nil, errors.New("the configured writer does not support configuring caller formats")
+				return nil, errors.New("the JSON encoder does not support configuring caller formats")
 			}
 		}
 	}
-	if e.config.Fields.Stacktrace != nil {
-		if stacktraceWriter, ok := writer.(StacktraceWriter); ok {
-			writer, err = stacktraceWriter.WithStacktraceEnabled()
+	if config.Fields.Stacktrace != nil {
+		if stacktraceEncoder, ok := encoder.(StacktraceEncoder); ok {
+			encoder, err = stacktraceEncoder.WithStacktraceEnabled()
 			if err != nil {
 				return nil, err
 			}
 		} else {
-			return nil, errors.New("stacktrace is not an optional field for the configured writer")
+			return nil, errors.New("stacktrace is not an optional field for the JSON encoder")
 		}
-		if e.config.Fields.Stacktrace.Key != "" {
-			if stacktraceKeyWriter, ok := writer.(StacktraceKeyWriter); ok {
-				writer, err = stacktraceKeyWriter.WithStacktraceKey(e.config.Fields.Stacktrace.Key)
+		if config.Fields.Stacktrace.Key != "" {
+			if stacktraceKeyEncoder, ok := encoder.(StacktraceKeyEncoder); ok {
+				encoder, err = stacktraceKeyEncoder.WithStacktraceKey(config.Fields.Stacktrace.Key)
 				if err != nil {
 					return nil, err
 				}
 			} else {
-				return nil, errors.New("the configured writer does not support configuring stacktrace keys")
+				return nil, errors.New("the JSON encoder does not support configuring stacktrace keys")
 			}
 		}
 	}
-	return writer, nil
+	return encoder, nil
 }
 
 type encodersConfig struct {

@@ -50,19 +50,6 @@ func String(name string, value string) Field {
 	}
 }
 
-// Stringp creates a named string pointer field
-func Stringp(name string, value *string) Field {
-	return func(writer Writer) (Writer, error) {
-		if fieldWriter, ok := writer.(StringPointerFieldWriter); ok {
-			return fieldWriter.WithStringPointerField(name, value), nil
-		}
-		if fieldWriter, ok := writer.(StringFieldWriter); ok && value != nil {
-			return fieldWriter.WithStringField(name, *value), nil
-		}
-		return nil, fmt.Errorf("field type is not supported by the configured logging framework")
-	}
-}
-
 // Strings creates a named string slice field
 func Strings(name string, value []string) Field {
 	return func(writer Writer) (Writer, error) {
@@ -84,25 +71,6 @@ func Int(name string, value int) Field {
 		}
 		if fieldWriter, ok := writer.(StringFieldWriter); ok {
 			return fieldWriter.WithStringField(name, strconv.Itoa(value)), nil
-		}
-		return nil, fmt.Errorf("field type is not supported by the configured logging framework")
-	}
-}
-
-// Intp creates a named int pointer field
-func Intp(name string, value *int) Field {
-	return func(writer Writer) (Writer, error) {
-		if fieldWriter, ok := writer.(IntPointerFieldWriter); ok {
-			return fieldWriter.WithIntPointerField(name, value), nil
-		}
-		if value == nil {
-			return nil, fmt.Errorf("nil pointers are not supported by the configured logging framework")
-		}
-		if fieldWriter, ok := writer.(IntFieldWriter); ok {
-			return fieldWriter.WithIntField(name, *value), nil
-		}
-		if fieldWriter, ok := writer.(StringFieldWriter); ok {
-			return fieldWriter.WithStringField(name, strconv.Itoa(*value)), nil
 		}
 		return nil, fmt.Errorf("field type is not supported by the configured logging framework")
 	}
@@ -137,28 +105,6 @@ func Int32(name string, value int32) Field {
 	}
 }
 
-// Int32p creates a named int32 pointer field
-func Int32p(name string, value *int32) Field {
-	return func(writer Writer) (Writer, error) {
-		if fieldWriter, ok := writer.(Int32PointerFieldWriter); ok {
-			return fieldWriter.WithInt32PointerField(name, value), nil
-		}
-		if value == nil {
-			return nil, fmt.Errorf("nil pointers are not supported by the configured logging framework")
-		}
-		if fieldWriter, ok := writer.(Int32FieldWriter); ok {
-			return fieldWriter.WithInt32Field(name, *value), nil
-		}
-		if fieldWriter, ok := writer.(IntFieldWriter); ok {
-			return fieldWriter.WithIntField(name, int(*value)), nil
-		}
-		if fieldWriter, ok := writer.(StringFieldWriter); ok {
-			return fieldWriter.WithStringField(name, strconv.Itoa(int(*value))), nil
-		}
-		return nil, fmt.Errorf("field type is not supported by the configured logging framework")
-	}
-}
-
 // Int32s creates a named int32 slice field
 func Int32s(name string, value []int32) Field {
 	return func(writer Writer) (Writer, error) {
@@ -188,28 +134,6 @@ func Int64(name string, value int64) Field {
 	}
 }
 
-// Int64p creates a named int64 pointer field
-func Int64p(name string, value *int64) Field {
-	return func(writer Writer) (Writer, error) {
-		if fieldWriter, ok := writer.(Int64PointerFieldWriter); ok {
-			return fieldWriter.WithInt64PointerField(name, value), nil
-		}
-		if value == nil {
-			return nil, fmt.Errorf("nil pointers are not supported by the configured logging framework")
-		}
-		if fieldWriter, ok := writer.(Int64FieldWriter); ok {
-			return fieldWriter.WithInt64Field(name, *value), nil
-		}
-		if fieldWriter, ok := writer.(IntFieldWriter); ok {
-			return fieldWriter.WithIntField(name, int(*value)), nil
-		}
-		if fieldWriter, ok := writer.(StringFieldWriter); ok {
-			return fieldWriter.WithStringField(name, strconv.Itoa(int(*value))), nil
-		}
-		return nil, fmt.Errorf("field type is not supported by the configured logging framework")
-	}
-}
-
 // Int64s creates a named int64 slice field
 func Int64s(name string, value []int64) Field {
 	return func(writer Writer) (Writer, error) {
@@ -234,28 +158,6 @@ func Uint(name string, value uint) Field {
 		}
 		if fieldWriter, ok := writer.(StringFieldWriter); ok {
 			return fieldWriter.WithStringField(name, strconv.Itoa(int(value))), nil
-		}
-		return nil, fmt.Errorf("field type is not supported by the configured logging framework")
-	}
-}
-
-// Uintp creates a named uint pointer field
-func Uintp(name string, value *uint) Field {
-	return func(writer Writer) (Writer, error) {
-		if fieldWriter, ok := writer.(UintPointerFieldWriter); ok {
-			return fieldWriter.WithUintPointerField(name, value), nil
-		}
-		if value == nil {
-			return nil, fmt.Errorf("nil pointers are not supported by the configured logging framework")
-		}
-		if fieldWriter, ok := writer.(UintFieldWriter); ok {
-			return fieldWriter.WithUintField(name, *value), nil
-		}
-		if fieldWriter, ok := writer.(IntFieldWriter); ok {
-			return fieldWriter.WithIntField(name, int(*value)), nil
-		}
-		if fieldWriter, ok := writer.(StringFieldWriter); ok {
-			return fieldWriter.WithStringField(name, strconv.Itoa(int(*value))), nil
 		}
 		return nil, fmt.Errorf("field type is not supported by the configured logging framework")
 	}
@@ -293,31 +195,6 @@ func Uint32(name string, value uint32) Field {
 	}
 }
 
-// Uint32p creates a named uint32 pointer field
-func Uint32p(name string, value *uint32) Field {
-	return func(writer Writer) (Writer, error) {
-		if fieldWriter, ok := writer.(Uint32PointerFieldWriter); ok {
-			return fieldWriter.WithUint32PointerField(name, value), nil
-		}
-		if value == nil {
-			return nil, fmt.Errorf("nil pointers are not supported by the configured logging framework")
-		}
-		if fieldWriter, ok := writer.(Uint32FieldWriter); ok {
-			return fieldWriter.WithUint32Field(name, *value), nil
-		}
-		if fieldWriter, ok := writer.(UintFieldWriter); ok {
-			return fieldWriter.WithUintField(name, uint(*value)), nil
-		}
-		if fieldWriter, ok := writer.(IntFieldWriter); ok {
-			return fieldWriter.WithIntField(name, int(*value)), nil
-		}
-		if fieldWriter, ok := writer.(StringFieldWriter); ok {
-			return fieldWriter.WithStringField(name, strconv.Itoa(int(*value))), nil
-		}
-		return nil, fmt.Errorf("field type is not supported by the configured logging framework")
-	}
-}
-
 // Uint32s creates a named uint32 slice field
 func Uint32s(name string, value []uint32) Field {
 	return func(writer Writer) (Writer, error) {
@@ -350,31 +227,6 @@ func Uint64(name string, value uint64) Field {
 	}
 }
 
-// Uint64p creates a named uint64 pointer field
-func Uint64p(name string, value *uint64) Field {
-	return func(writer Writer) (Writer, error) {
-		if fieldWriter, ok := writer.(Uint64PointerFieldWriter); ok {
-			return fieldWriter.WithUint64PointerField(name, value), nil
-		}
-		if value == nil {
-			return nil, fmt.Errorf("nil pointers are not supported by the configured logging framework")
-		}
-		if fieldWriter, ok := writer.(Uint64FieldWriter); ok {
-			return fieldWriter.WithUint64Field(name, *value), nil
-		}
-		if fieldWriter, ok := writer.(UintFieldWriter); ok {
-			return fieldWriter.WithUintField(name, uint(*value)), nil
-		}
-		if fieldWriter, ok := writer.(IntFieldWriter); ok {
-			return fieldWriter.WithIntField(name, int(*value)), nil
-		}
-		if fieldWriter, ok := writer.(StringFieldWriter); ok {
-			return fieldWriter.WithStringField(name, strconv.Itoa(int(*value))), nil
-		}
-		return nil, fmt.Errorf("field type is not supported by the configured logging framework")
-	}
-}
-
 // Uint64s creates a named uint64 slice field
 func Uint64s(name string, value []uint64) Field {
 	return func(writer Writer) (Writer, error) {
@@ -396,25 +248,6 @@ func Float32(name string, value float32) Field {
 		}
 		if fieldWriter, ok := writer.(StringFieldWriter); ok {
 			return fieldWriter.WithStringField(name, strconv.FormatFloat(float64(value), 'f', -1, 32)), nil
-		}
-		return nil, fmt.Errorf("field type is not supported by the configured logging framework")
-	}
-}
-
-// Float32p creates a named float32 pointer field
-func Float32p(name string, value *float32) Field {
-	return func(writer Writer) (Writer, error) {
-		if fieldWriter, ok := writer.(Float32PointerFieldWriter); ok {
-			return fieldWriter.WithFloat32PointerField(name, value), nil
-		}
-		if value == nil {
-			return nil, fmt.Errorf("nil pointers are not supported by the configured logging framework")
-		}
-		if fieldWriter, ok := writer.(Float32FieldWriter); ok {
-			return fieldWriter.WithFloat32Field(name, *value), nil
-		}
-		if fieldWriter, ok := writer.(StringFieldWriter); ok {
-			return fieldWriter.WithStringField(name, strconv.FormatFloat(float64(*value), 'f', -1, 32)), nil
 		}
 		return nil, fmt.Errorf("field type is not supported by the configured logging framework")
 	}
@@ -446,25 +279,6 @@ func Float64(name string, value float64) Field {
 	}
 }
 
-// Float64p creates a named float64 pointer field
-func Float64p(name string, value *float64) Field {
-	return func(writer Writer) (Writer, error) {
-		if fieldWriter, ok := writer.(Float64PointerFieldWriter); ok {
-			return fieldWriter.WithFloat64PointerField(name, value), nil
-		}
-		if value == nil {
-			return nil, fmt.Errorf("nil pointers are not supported by the configured logging framework")
-		}
-		if fieldWriter, ok := writer.(Float64FieldWriter); ok {
-			return fieldWriter.WithFloat64Field(name, *value), nil
-		}
-		if fieldWriter, ok := writer.(StringFieldWriter); ok {
-			return fieldWriter.WithStringField(name, strconv.FormatFloat(*value, 'f', -1, 64)), nil
-		}
-		return nil, fmt.Errorf("field type is not supported by the configured logging framework")
-	}
-}
-
 // Float64s creates a named float64 slice field
 func Float64s(name string, value []float64) Field {
 	return func(writer Writer) (Writer, error) {
@@ -486,25 +300,6 @@ func Bool(name string, value bool) Field {
 		}
 		if fieldWriter, ok := writer.(StringFieldWriter); ok {
 			return fieldWriter.WithStringField(name, strconv.FormatBool(value)), nil
-		}
-		return nil, fmt.Errorf("field type is not supported by the configured logging framework")
-	}
-}
-
-// Boolp creates a named bool pointer field
-func Boolp(name string, value *bool) Field {
-	return func(writer Writer) (Writer, error) {
-		if fieldWriter, ok := writer.(BoolPointerFieldWriter); ok {
-			return fieldWriter.WithBoolPointerField(name, value), nil
-		}
-		if value == nil {
-			return nil, fmt.Errorf("nil pointers are not supported by the configured logging framework")
-		}
-		if fieldWriter, ok := writer.(BoolFieldWriter); ok {
-			return fieldWriter.WithBoolField(name, *value), nil
-		}
-		if fieldWriter, ok := writer.(StringFieldWriter); ok {
-			return fieldWriter.WithStringField(name, strconv.FormatBool(*value)), nil
 		}
 		return nil, fmt.Errorf("field type is not supported by the configured logging framework")
 	}
@@ -536,25 +331,6 @@ func Time(name string, value time.Time) Field {
 	}
 }
 
-// Timep creates a named Time pointer field
-func Timep(name string, value *time.Time) Field {
-	return func(writer Writer) (Writer, error) {
-		if fieldWriter, ok := writer.(TimePointerFieldWriter); ok {
-			return fieldWriter.WithTimePointerField(name, value), nil
-		}
-		if value == nil {
-			return nil, fmt.Errorf("nil pointers are not supported by the configured logging framework")
-		}
-		if fieldWriter, ok := writer.(TimeFieldWriter); ok {
-			return fieldWriter.WithTimeField(name, *value), nil
-		}
-		if fieldWriter, ok := writer.(StringFieldWriter); ok {
-			return fieldWriter.WithStringField(name, value.String()), nil
-		}
-		return nil, fmt.Errorf("field type is not supported by the configured logging framework")
-	}
-}
-
 // Times creates a named Time slice field
 func Times(name string, value []time.Time) Field {
 	return func(writer Writer) (Writer, error) {
@@ -573,25 +349,6 @@ func Duration(name string, value time.Duration) Field {
 	return func(writer Writer) (Writer, error) {
 		if fieldWriter, ok := writer.(DurationFieldWriter); ok {
 			return fieldWriter.WithDurationField(name, value), nil
-		}
-		if fieldWriter, ok := writer.(StringFieldWriter); ok {
-			return fieldWriter.WithStringField(name, value.String()), nil
-		}
-		return nil, fmt.Errorf("field type is not supported by the configured logging framework")
-	}
-}
-
-// Durationp creates a named Duration pointer field
-func Durationp(name string, value *time.Duration) Field {
-	return func(writer Writer) (Writer, error) {
-		if fieldWriter, ok := writer.(DurationPointerFieldWriter); ok {
-			return fieldWriter.WithDurationPointerField(name, value), nil
-		}
-		if value == nil {
-			return nil, fmt.Errorf("nil pointers are not supported by the configured logging framework")
-		}
-		if fieldWriter, ok := writer.(DurationFieldWriter); ok {
-			return fieldWriter.WithDurationField(name, *value), nil
 		}
 		if fieldWriter, ok := writer.(StringFieldWriter); ok {
 			return fieldWriter.WithStringField(name, value.String()), nil

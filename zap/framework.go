@@ -6,7 +6,7 @@ package zap
 
 import (
 	"github.com/atomix/dazl"
-	"io"
+	"go.uber.org/zap/zapcore"
 )
 
 func init() {
@@ -15,6 +15,14 @@ func init() {
 
 type Framework struct{}
 
-func (f *Framework) NewWriter(writer io.Writer, encoding dazl.Encoding) (dazl.Writer, error) {
-	return newWriter(writer, encoding)
+func (f *Framework) Name() string {
+	return "zap"
+}
+
+func (f *Framework) ConsoleEncoder() dazl.Encoder {
+	return newConsoleEncoder(zapcore.EncoderConfig{})
+}
+
+func (f *Framework) JSONEncoder() dazl.Encoder {
+	return newJSONEncoder(zapcore.EncoderConfig{})
 }

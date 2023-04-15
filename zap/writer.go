@@ -13,34 +13,19 @@ import (
 	"time"
 )
 
-func newWriter(writer io.Writer, encoding dazl.Encoding) (dazl.Writer, error) {
-	encoder, err := newEncoder(encoding, zapcore.EncoderConfig{})
-	if err != nil {
-		return nil, err
-	}
-
-	var config zap.Config
-	config.Level = zap.NewAtomicLevelAt(zap.DebugLevel)
-	config.Encoding = string(encoding)
-
-	ws := &writeSyncer{
-		Writer: writer,
-	}
-
+func newWriter(writer io.Writer, encoder zapcore.Encoder, config zap.Config) (dazl.Writer, error) {
 	logger, err := config.Build(
 		zap.AddCallerSkip(5),
 		zap.WrapCore(func(zapcore.Core) zapcore.Core {
-			return zapcore.NewCore(encoder, ws, zap.DebugLevel)
+			return zapcore.NewCore(encoder, &writeSyncer{writer}, zap.DebugLevel)
 		}))
 	if err != nil {
 		return nil, err
 	}
 
 	return &Writer{
-		root:     logger,
-		logger:   logger,
-		writer:   ws,
-		encoding: encoding,
+		root:   logger,
+		logger: logger,
 	}, nil
 }
 
@@ -57,155 +42,29 @@ func newEncoder(encoding dazl.Encoding, config zapcore.EncoderConfig) (zapcore.E
 
 // Writer is a dazl output implementation
 type Writer struct {
-	root     *zap.Logger
-	logger   *zap.Logger
-	writer   zapcore.WriteSyncer
-	encoding dazl.Encoding
-	config   zapcore.EncoderConfig
+	root   *zap.Logger
+	logger *zap.Logger
 }
 
 func (w *Writer) WithName(name string) dazl.Writer {
 	return &Writer{
-		root:     w.root,
-		logger:   w.root.Named(name),
-		writer:   w.writer,
-		encoding: w.encoding,
-		config:   w.config,
+		root:   w.root,
+		logger: w.root.Named(name),
 	}
 }
 
 func (w *Writer) withField(field zap.Field) dazl.Writer {
 	return &Writer{
-		root:     w.root,
-		logger:   w.logger.With(field),
-		writer:   w.writer,
-		encoding: w.encoding,
-		config:   w.config,
+		root:   w.root,
+		logger: w.logger.With(field),
 	}
 }
 
 func (w *Writer) withOptions(options ...zap.Option) dazl.Writer {
 	return &Writer{
-		root:     w.root,
-		logger:   w.logger.WithOptions(options...),
-		writer:   w.writer,
-		encoding: w.encoding,
-		config:   w.config,
+		root:   w.root,
+		logger: w.logger.WithOptions(options...),
 	}
-}
-
-func (w *Writer) withEncoder(config zapcore.EncoderConfig) (dazl.Writer, error) {
-	encoder, err := newEncoder(w.encoding, config)
-	if err != nil {
-		return nil, err
-	}
-	return w.withOptions(zap.WrapCore(func(zapcore.Core) zapcore.Core {
-		return zapcore.NewCore(encoder, w.writer, zap.DebugLevel)
-	})), nil
-}
-
-func (w *Writer) WithMessageKey(key string) (dazl.Writer, error) {
-	config := w.config
-	config.MessageKey = key
-	return w.withEncoder(config)
-}
-
-func (w *Writer) WithNameEnabled() (dazl.Writer, error) {
-	return w.WithNameKey("logger")
-}
-
-func (w *Writer) WithNameKey(key string) (dazl.Writer, error) {
-	config := w.config
-	config.NameKey = key
-	return w.withEncoder(config)
-}
-
-func (w *Writer) WithLevelEnabled() (dazl.Writer, error) {
-	config := w.config
-	config.LevelKey = "level"
-	config.EncodeLevel = zapcore.CapitalLevelEncoder
-	return w.withEncoder(config)
-}
-
-func (w *Writer) WithLevelKey(key string) (dazl.Writer, error) {
-	config := w.config
-	config.LevelKey = key
-	return w.withEncoder(config)
-}
-
-func (w *Writer) WithLevelFormat(format dazl.LevelFormat) (dazl.Writer, error) {
-	config := w.config
-	switch format {
-	case dazl.LowerCaseLevelFormat:
-		config.EncodeLevel = zapcore.LowercaseLevelEncoder
-	case dazl.UpperCaseLevelFormat:
-		config.EncodeLevel = zapcore.CapitalLevelEncoder
-	default:
-		return nil, fmt.Errorf("unsupported level format '%s'", format)
-	}
-	return w.withEncoder(config)
-}
-
-func (w *Writer) WithTimestampEnabled() (dazl.Writer, error) {
-	config := w.config
-	config.TimeKey = "time"
-	config.EncodeTime = zapcore.ISO8601TimeEncoder
-	return w.withEncoder(config)
-}
-
-func (w *Writer) WithTimestampKey(key string) (dazl.Writer, error) {
-	config := w.config
-	config.TimeKey = key
-	return w.withEncoder(config)
-}
-
-func (w *Writer) WithTimestampFormat(format dazl.TimestampFormat) (dazl.Writer, error) {
-	config := w.config
-	switch format {
-	case dazl.ISO8601TimestampFormat:
-		config.EncodeTime = zapcore.ISO8601TimeEncoder
-	case dazl.UnixTimestampFormat:
-		config.EncodeTime = zapcore.EpochTimeEncoder
-	default:
-		return nil, fmt.Errorf("unsupported time format '%s'", format)
-	}
-	return w.withEncoder(config)
-}
-
-func (w *Writer) WithCallerEnabled() (dazl.Writer, error) {
-	config := w.config
-	config.CallerKey = "caller"
-	config.EncodeCaller = zapcore.ShortCallerEncoder
-	return w.withEncoder(config)
-}
-
-func (w *Writer) WithCallerKey(key string) (dazl.Writer, error) {
-	config := w.config
-	config.CallerKey = key
-	return w.withEncoder(config)
-}
-
-func (w *Writer) WithCallerFormat(format dazl.CallerFormat) (dazl.Writer, error) {
-	config := w.config
-	switch format {
-	case dazl.ShortCallerFormat:
-		config.EncodeCaller = zapcore.ShortCallerEncoder
-	case dazl.FullCallerFormat:
-		config.EncodeCaller = zapcore.FullCallerEncoder
-	default:
-		return nil, fmt.Errorf("unsupported caller format '%s'", format)
-	}
-	return w.withEncoder(config)
-}
-
-func (w *Writer) WithStacktraceEnabled() (dazl.Writer, error) {
-	return w.WithStacktraceKey("trace")
-}
-
-func (w *Writer) WithStacktraceKey(key string) (dazl.Writer, error) {
-	config := w.config
-	config.StacktraceKey = key
-	return w.withEncoder(config)
 }
 
 func (w *Writer) WithStringField(name string, value string) dazl.Writer {
@@ -394,20 +253,6 @@ func (w *Writer) Sync() error {
 
 var _ dazl.Writer = (*Writer)(nil)
 var _ dazl.FieldWriter = (*Writer)(nil)
-var _ dazl.MessageKeyWriter = (*Writer)(nil)
-var _ dazl.NameWriter = (*Writer)(nil)
-var _ dazl.NameKeyWriter = (*Writer)(nil)
-var _ dazl.LevelWriter = (*Writer)(nil)
-var _ dazl.LevelKeyWriter = (*Writer)(nil)
-var _ dazl.LevelFormattingWriter = (*Writer)(nil)
-var _ dazl.TimestampWriter = (*Writer)(nil)
-var _ dazl.TimestampKeyWriter = (*Writer)(nil)
-var _ dazl.TimestampFormattingWriter = (*Writer)(nil)
-var _ dazl.CallerWriter = (*Writer)(nil)
-var _ dazl.CallerKeyWriter = (*Writer)(nil)
-var _ dazl.CallerFormattingWriter = (*Writer)(nil)
-var _ dazl.StacktraceWriter = (*Writer)(nil)
-var _ dazl.StacktraceKeyWriter = (*Writer)(nil)
 
 type writeSyncer struct {
 	io.Writer

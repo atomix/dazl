@@ -8,7 +8,6 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/yaml.v3"
-	io "io"
 	"testing"
 )
 
@@ -115,32 +114,40 @@ func TestLogger(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	console := NewMockEncoder(ctrl)
+	json := NewMockEncoder(ctrl)
+
+	Register(&testFramework{
+		console: console,
+		json:    json,
+	})
+
 	stdout := NewMockWriter(ctrl)
 	file := NewMockWriter(ctrl)
 
-	Register(newTestFramework(stdout, file))
+	console.EXPECT().NewWriter(gomock.Any()).Return(stdout, nil)
+	json.EXPECT().NewWriter(gomock.Any()).Return(file, nil)
+
+	console.EXPECT().WithNameEnabled().Return(console, nil)
+	console.EXPECT().WithLevelEnabled().Return(console, nil)
+	console.EXPECT().WithLevelFormat(gomock.Eq(UpperCaseLevelFormat)).Return(console, nil)
+	console.EXPECT().WithTimestampEnabled().Return(console, nil)
+	console.EXPECT().WithTimestampFormat(gomock.Eq(ISO8601TimestampFormat)).Return(console, nil)
+	console.EXPECT().WithCallerEnabled().Return(console, nil)
+	console.EXPECT().WithCallerFormat(gomock.Eq(ShortCallerFormat)).Return(console, nil)
+
+	json.EXPECT().WithNameEnabled().Return(json, nil)
+	json.EXPECT().WithNameKey(gomock.Eq("logger")).Return(json, nil)
+	json.EXPECT().WithLevelEnabled().Return(json, nil)
+	json.EXPECT().WithLevelFormat(gomock.Eq(LowerCaseLevelFormat)).Return(json, nil)
+	json.EXPECT().WithTimestampEnabled().Return(json, nil)
+	json.EXPECT().WithTimestampKey(gomock.Eq("timestamp")).Return(json, nil)
+	json.EXPECT().WithCallerEnabled().Return(json, nil)
+	json.EXPECT().WithStacktraceEnabled().Return(json, nil)
+	json.EXPECT().WithStacktraceKey(gomock.Eq("trace")).Return(json, nil)
 
 	var config loggingConfig
 	assert.NoError(t, yaml.Unmarshal([]byte(testConfig), &config))
-
-	stdout.EXPECT().WithNameEnabled().Return(stdout, nil)
-	stdout.EXPECT().WithLevelEnabled().Return(stdout, nil)
-	stdout.EXPECT().WithLevelFormat(gomock.Eq(UpperCaseLevelFormat)).Return(stdout, nil)
-	stdout.EXPECT().WithTimestampEnabled().Return(stdout, nil)
-	stdout.EXPECT().WithTimestampFormat(gomock.Eq(ISO8601TimestampFormat)).Return(stdout, nil)
-	stdout.EXPECT().WithCallerEnabled().Return(stdout, nil)
-	stdout.EXPECT().WithCallerFormat(gomock.Eq(ShortCallerFormat)).Return(stdout, nil)
-
-	file.EXPECT().WithNameEnabled().Return(file, nil)
-	file.EXPECT().WithNameKey(gomock.Eq("logger")).Return(file, nil)
-	file.EXPECT().WithLevelEnabled().Return(file, nil)
-	file.EXPECT().WithLevelFormat(gomock.Eq(LowerCaseLevelFormat)).Return(file, nil)
-	file.EXPECT().WithTimestampEnabled().Return(file, nil)
-	file.EXPECT().WithTimestampKey(gomock.Eq("timestamp")).Return(file, nil)
-	file.EXPECT().WithCallerEnabled().Return(file, nil)
-	file.EXPECT().WithStacktraceEnabled().Return(file, nil)
-	file.EXPECT().WithStacktraceKey(gomock.Eq("trace")).Return(file, nil)
-
 	assert.NoError(t, configure(config))
 
 	var log = root
@@ -250,19 +257,19 @@ func TestLogger(t *testing.T) {
 	log.Warn("warn")
 }
 
-func newTestFramework(writers ...Writer) Framework {
-	return &testFramework{
-		writers: writers,
-	}
-}
-
 type testFramework struct {
-	writers []Writer
-	index   int
+	console Encoder
+	json    Encoder
 }
 
-func (f *testFramework) NewWriter(io.Writer, Encoding) (Writer, error) {
-	writer := f.writers[f.index]
-	f.index++
-	return writer, nil
+func (f *testFramework) Name() string {
+	return "test"
+}
+
+func (f *testFramework) ConsoleEncoder() Encoder {
+	return f.console
+}
+
+func (f *testFramework) JSONEncoder() Encoder {
+	return f.json
 }

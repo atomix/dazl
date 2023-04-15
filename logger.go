@@ -6,6 +6,7 @@ package dazl
 
 import (
 	"fmt"
+	"os"
 	"runtime"
 	"strings"
 	"sync"
@@ -85,7 +86,10 @@ func getCallerPackage() (string, bool) {
 }
 
 func configure(config loggingConfig) error {
-	context := newLoggingContext(config)
+	context, err := newLoggingContext(config)
+	if err != nil {
+		return err
+	}
 	logger, err := newLogger(context, nil, "")
 	if err != nil {
 		return err
@@ -204,16 +208,34 @@ func newLogger(context *loggingContext, parent *dazlLogger, name string) (*dazlL
 	return logger, nil
 }
 
-func newLoggingContext(config loggingConfig) *loggingContext {
-	return &loggingContext{
-		config: config,
+func newLoggingContext(config loggingConfig) (*loggingContext, error) {
+	framework := getFramework()
+	encoders := make(map[Encoding]Encoder)
+	if consoleEncodingFramework, ok := framework.(ConsoleEncodingFramework); ok {
+		encoder, err := configureConsoleEncoder(config.Encoders.Console, consoleEncodingFramework.ConsoleEncoder())
+		if err != nil {
+			return nil, err
+		}
+		encoders[ConsoleEncoding] = encoder
 	}
+	if jsonEncodingFramework, ok := framework.(JSONEncodingFramework); ok {
+		encoder, err := configureJSONEncoder(config.Encoders.JSON, jsonEncodingFramework.JSONEncoder())
+		if err != nil {
+			return nil, err
+		}
+		encoders[JSONEncoding] = encoder
+	}
+	return &loggingContext{
+		config:   config,
+		encoders: encoders,
+	}, nil
 }
 
 type loggingContext struct {
-	config  loggingConfig
-	writers sync.Map
-	mu      sync.Mutex
+	config   loggingConfig
+	encoders map[Encoding]Encoder
+	writers  sync.Map
+	mu       sync.Mutex
 }
 
 func (c *loggingContext) getWriter(name string) (Writer, error) {
@@ -230,13 +252,50 @@ func (c *loggingContext) getWriter(name string) (Writer, error) {
 		return writer.(Writer), nil
 	}
 
-	writer, err := newWriter(c.config, name)
+	writer, err := c.newWriter(name)
 	if err != nil {
 		return nil, err
 	}
 
 	c.writers.Store(name, writer)
 	return writer.(Writer), nil
+}
+
+func (c *loggingContext) newWriter(name string) (Writer, error) {
+	switch name {
+	case "stdout":
+		if c.config.Writers.Stdout == nil {
+			return nil, fmt.Errorf("'%s' writer is not configured", name)
+		}
+		encoder, ok := c.encoders[c.config.Writers.Stdout.Encoder]
+		if !ok {
+			return nil, fmt.Errorf("%s framework does not support %s encoding", getFramework().Name(), c.config.Writers.Stdout.Encoder)
+		}
+		return encoder.NewWriter(os.Stdout)
+	case "stderr":
+		if c.config.Writers.Stderr == nil {
+			return nil, fmt.Errorf("'%s' writer is not configured", name)
+		}
+		encoder, ok := c.encoders[c.config.Writers.Stderr.Encoder]
+		if !ok {
+			return nil, fmt.Errorf("%s framework does not support %s encoding", getFramework().Name(), c.config.Writers.Stderr.Encoder)
+		}
+		return encoder.NewWriter(os.Stderr)
+	default:
+		config, ok := c.config.Writers.getFile(name)
+		if !ok {
+			return nil, fmt.Errorf("'%s' writer is not configured", name)
+		}
+		file, err := os.OpenFile(config.Path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
+		if err != nil {
+			return nil, err
+		}
+		encoder, ok := c.encoders[config.Encoder]
+		if !ok {
+			return nil, fmt.Errorf("%s framework does not support %s encoding", getFramework().Name(), config.Encoder)
+		}
+		return encoder.NewWriter(file)
+	}
 }
 
 type loggerContext struct {

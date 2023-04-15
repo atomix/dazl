@@ -7,8 +7,6 @@ package dazl
 import (
 	"fmt"
 	"gopkg.in/yaml.v3"
-	"io"
-	"os"
 	"time"
 )
 
@@ -25,62 +23,6 @@ type Writer interface {
 
 type CallSkippingWriter interface {
 	WithSkipCalls(calls int) Writer
-}
-
-type NameWriter interface {
-	WithNameEnabled() (Writer, error)
-}
-
-type NameKeyWriter interface {
-	WithNameKey(key string) (Writer, error)
-}
-
-type MessageKeyWriter interface {
-	WithMessageKey(key string) (Writer, error)
-}
-
-type LevelWriter interface {
-	WithLevelEnabled() (Writer, error)
-}
-
-type LevelKeyWriter interface {
-	WithLevelKey(key string) (Writer, error)
-}
-
-type LevelFormattingWriter interface {
-	WithLevelFormat(format LevelFormat) (Writer, error)
-}
-
-type TimestampWriter interface {
-	WithTimestampEnabled() (Writer, error)
-}
-
-type TimestampKeyWriter interface {
-	WithTimestampKey(key string) (Writer, error)
-}
-
-type TimestampFormattingWriter interface {
-	WithTimestampFormat(format TimestampFormat) (Writer, error)
-}
-
-type CallerWriter interface {
-	WithCallerEnabled() (Writer, error)
-}
-
-type CallerKeyWriter interface {
-	WithCallerKey(key string) (Writer, error)
-}
-
-type CallerFormattingWriter interface {
-	WithCallerFormat(format CallerFormat) (Writer, error)
-}
-
-type StacktraceWriter interface {
-	WithStacktraceEnabled() (Writer, error)
-}
-
-type StacktraceKeyWriter interface {
-	WithStacktraceKey(key string) (Writer, error)
 }
 
 type BasicSamplingWriter interface {
@@ -106,18 +48,6 @@ type FieldWriter interface {
 	DurationFieldWriter
 	BinaryFieldWriter
 	BytesFieldWriter
-	StringPointerFieldWriter
-	BoolPointerFieldWriter
-	IntPointerFieldWriter
-	Int32PointerFieldWriter
-	Int64PointerFieldWriter
-	UintPointerFieldWriter
-	Uint32PointerFieldWriter
-	Uint64PointerFieldWriter
-	Float32PointerFieldWriter
-	Float64PointerFieldWriter
-	TimePointerFieldWriter
-	DurationPointerFieldWriter
 	StringSliceFieldWriter
 	BoolSliceFieldWriter
 	IntSliceFieldWriter
@@ -196,54 +126,6 @@ type BytesFieldWriter interface {
 	WithBytesField(name string, value []byte) Writer
 }
 
-type StringPointerFieldWriter interface {
-	WithStringPointerField(name string, value *string) Writer
-}
-
-type BoolPointerFieldWriter interface {
-	WithBoolPointerField(name string, value *bool) Writer
-}
-
-type IntPointerFieldWriter interface {
-	WithIntPointerField(name string, value *int) Writer
-}
-
-type Int32PointerFieldWriter interface {
-	WithInt32PointerField(name string, value *int32) Writer
-}
-
-type Int64PointerFieldWriter interface {
-	WithInt64PointerField(name string, value *int64) Writer
-}
-
-type UintPointerFieldWriter interface {
-	WithUintPointerField(name string, value *uint) Writer
-}
-
-type Uint32PointerFieldWriter interface {
-	WithUint32PointerField(name string, value *uint32) Writer
-}
-
-type Uint64PointerFieldWriter interface {
-	WithUint64PointerField(name string, value *uint64) Writer
-}
-
-type Float32PointerFieldWriter interface {
-	WithFloat32PointerField(name string, value *float32) Writer
-}
-
-type Float64PointerFieldWriter interface {
-	WithFloat64PointerField(name string, value *float64) Writer
-}
-
-type TimePointerFieldWriter interface {
-	WithTimePointerField(name string, value *time.Time) Writer
-}
-
-type DurationPointerFieldWriter interface {
-	WithDurationPointerField(name string, value *time.Duration) Writer
-}
-
 type StringSliceFieldWriter interface {
 	WithStringSliceField(name string, values []string) Writer
 }
@@ -290,48 +172,6 @@ type TimeSliceFieldWriter interface {
 
 type DurationSliceFieldWriter interface {
 	WithDurationSliceField(name string, values []time.Duration) Writer
-}
-
-func newWriter(config loggingConfig, name string) (Writer, error) {
-	var ioWriter io.Writer
-	var encoding Encoding
-	switch name {
-	case "stdout":
-		if config.Writers.Stdout == nil {
-			return nil, fmt.Errorf("'%s' writer is not configured", name)
-		}
-		ioWriter = os.Stdout
-		encoding = config.Writers.Stdout.Encoder
-	case "stderr":
-		if config.Writers.Stderr == nil {
-			return nil, fmt.Errorf("'%s' writer is not configured", name)
-		}
-		ioWriter = os.Stderr
-		encoding = config.Writers.Stderr.Encoder
-	default:
-		config, ok := config.Writers.getFile(name)
-		if !ok {
-			return nil, fmt.Errorf("'%s' writer is not configured", name)
-		}
-		writer, err := os.OpenFile(config.Path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
-		if err != nil {
-			return nil, err
-		}
-		ioWriter = writer
-		encoding = config.Encoder
-	}
-
-	writer, err := getFramework().NewWriter(ioWriter, encoding)
-	if err != nil {
-		return nil, err
-	}
-
-	encoder := newEncoder(encoding, config.Encoders)
-	writer, err = encoder.configure(writer)
-	if err != nil {
-		return nil, err
-	}
-	return writer, nil
 }
 
 type writersConfig struct {
