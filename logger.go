@@ -6,7 +6,6 @@ package dazl
 
 import (
 	"fmt"
-	"os"
 	"runtime"
 	"strings"
 	"sync"
@@ -158,7 +157,10 @@ func newLogger(context *loggingContext, parent *dazlLogger, name string) (*dazlL
 			if err != nil {
 				return nil, err
 			}
-			output = newOutput(writer.WithName(logger.name), EmptyLevel, &allSampler{})
+			if logger.name != "" {
+				writer = writer.WithName(logger.name)
+			}
+			output = newOutput(writer, EmptyLevel, &allSampler{})
 		}
 
 		// Add the level to the output if configured
@@ -228,43 +230,13 @@ func (c *loggingContext) getWriter(name string) (Writer, error) {
 		return writer.(Writer), nil
 	}
 
-	switch name {
-	case "stdout":
-		if c.config.Writers.Stdout == nil {
-			return nil, fmt.Errorf("'%s' writer is not configured", name)
-		}
-		writer, err := getFramework().NewWriter(os.Stdout, c.config.Writers.Stdout.Encoder)
-		if err != nil {
-			return nil, err
-		}
-		c.writers.Store(name, writer)
-		return writer, nil
-	case "stderr":
-		if c.config.Writers.Stderr == nil {
-			return nil, fmt.Errorf("'%s' writer is not configured", name)
-		}
-		writer, err := getFramework().NewWriter(os.Stderr, c.config.Writers.Stderr.Encoder)
-		if err != nil {
-			return nil, err
-		}
-		c.writers.Store(name, writer)
-		return writer, nil
-	default:
-		config, ok := c.config.Writers.getFile(name)
-		if !ok {
-			return nil, fmt.Errorf("'%s' writer is not configured", name)
-		}
-		file, err := os.OpenFile(config.Path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
-		if err != nil {
-			return nil, err
-		}
-		writer, err := getFramework().NewWriter(file, config.Encoder)
-		if err != nil {
-			return nil, err
-		}
-		c.writers.Store(name, writer)
-		return writer, nil
+	writer, err := newWriter(c.config, name)
+	if err != nil {
+		return nil, err
 	}
+
+	c.writers.Store(name, writer)
+	return writer.(Writer), nil
 }
 
 type loggerContext struct {

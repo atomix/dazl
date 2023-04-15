@@ -77,7 +77,7 @@ func (w *Writer) WithName(name string) dazl.Writer {
 func (w *Writer) withField(field zap.Field) dazl.Writer {
 	return &Writer{
 		root:     w.root,
-		logger:   w.root.With(field),
+		logger:   w.logger.With(field),
 		writer:   w.writer,
 		encoding: w.encoding,
 		config:   w.config,
@@ -87,7 +87,7 @@ func (w *Writer) withField(field zap.Field) dazl.Writer {
 func (w *Writer) withOptions(options ...zap.Option) dazl.Writer {
 	return &Writer{
 		root:     w.root,
-		logger:   w.root.WithOptions(options...),
+		logger:   w.logger.WithOptions(options...),
 		writer:   w.writer,
 		encoding: w.encoding,
 		config:   w.config,
@@ -104,13 +104,20 @@ func (w *Writer) withEncoder(config zapcore.EncoderConfig) (dazl.Writer, error) 
 	})), nil
 }
 
-func (w *Writer) WithMessage(key string) (dazl.Writer, error) {
+func (w *Writer) WithMessageKey(key string) (dazl.Writer, error) {
 	config := w.config
 	config.MessageKey = key
 	return w.withEncoder(config)
 }
 
-func (w *Writer) WithLevel(key string) (dazl.Writer, error) {
+func (w *Writer) WithLevel() (dazl.Writer, error) {
+	config := w.config
+	config.LevelKey = "level"
+	config.EncodeLevel = zapcore.CapitalLevelEncoder
+	return w.withEncoder(config)
+}
+
+func (w *Writer) WithLevelKey(key string) (dazl.Writer, error) {
 	config := w.config
 	config.LevelKey = key
 	return w.withEncoder(config)
@@ -129,7 +136,14 @@ func (w *Writer) WithLevelFormat(format dazl.LevelFormat) (dazl.Writer, error) {
 	return w.withEncoder(config)
 }
 
-func (w *Writer) WithTime(key string) (dazl.Writer, error) {
+func (w *Writer) WithTime() (dazl.Writer, error) {
+	config := w.config
+	config.TimeKey = "time"
+	config.EncodeTime = zapcore.ISO8601TimeEncoder
+	return w.withEncoder(config)
+}
+
+func (w *Writer) WithTimeKey(key string) (dazl.Writer, error) {
 	config := w.config
 	config.TimeKey = key
 	return w.withEncoder(config)
@@ -148,7 +162,14 @@ func (w *Writer) WithTimeFormat(format dazl.TimeFormat) (dazl.Writer, error) {
 	return w.withEncoder(config)
 }
 
-func (w *Writer) WithCaller(key string) (dazl.Writer, error) {
+func (w *Writer) WithCaller() (dazl.Writer, error) {
+	config := w.config
+	config.CallerKey = "caller"
+	config.EncodeCaller = zapcore.ShortCallerEncoder
+	return w.withEncoder(config)
+}
+
+func (w *Writer) WithCallerKey(key string) (dazl.Writer, error) {
 	config := w.config
 	config.CallerKey = key
 	return w.withEncoder(config)
@@ -159,7 +180,7 @@ func (w *Writer) WithCallerFormat(format dazl.CallerFormat) (dazl.Writer, error)
 	switch format {
 	case dazl.ShortCallerFormat:
 		config.EncodeCaller = zapcore.ShortCallerEncoder
-	case dazl.FulCallerFormat:
+	case dazl.FullCallerFormat:
 		config.EncodeCaller = zapcore.FullCallerEncoder
 	default:
 		return nil, fmt.Errorf("unsupported caller format '%s'", format)
@@ -167,7 +188,11 @@ func (w *Writer) WithCallerFormat(format dazl.CallerFormat) (dazl.Writer, error)
 	return w.withEncoder(config)
 }
 
-func (w *Writer) WithStacktrace(key string) (dazl.Writer, error) {
+func (w *Writer) WithStacktrace() (dazl.Writer, error) {
+	return w.WithStacktraceKey("trace")
+}
+
+func (w *Writer) WithStacktraceKey(key string) (dazl.Writer, error) {
 	config := w.config
 	config.StacktraceKey = key
 	return w.withEncoder(config)
@@ -359,14 +384,18 @@ func (w *Writer) Sync() error {
 
 var _ dazl.Writer = (*Writer)(nil)
 var _ dazl.FieldWriter = (*Writer)(nil)
-var _ dazl.MessageWriter = (*Writer)(nil)
+var _ dazl.MessageKeyWriter = (*Writer)(nil)
 var _ dazl.LevelWriter = (*Writer)(nil)
+var _ dazl.LevelKeyWriter = (*Writer)(nil)
 var _ dazl.LevelFormattingWriter = (*Writer)(nil)
 var _ dazl.TimeWriter = (*Writer)(nil)
+var _ dazl.TimeKeyWriter = (*Writer)(nil)
 var _ dazl.TimeFormattingWriter = (*Writer)(nil)
 var _ dazl.CallerWriter = (*Writer)(nil)
+var _ dazl.CallerKeyWriter = (*Writer)(nil)
 var _ dazl.CallerFormattingWriter = (*Writer)(nil)
 var _ dazl.StacktraceWriter = (*Writer)(nil)
+var _ dazl.StacktraceKeyWriter = (*Writer)(nil)
 
 type writeSyncer struct {
 	io.Writer

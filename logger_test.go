@@ -58,6 +58,16 @@ encoders:
           format: iso8601
       - caller:
           format: short
+  json:
+    fields:
+      - message
+      - level:
+          format: lowercase
+      - time:
+          key: timestamp
+      - caller
+      - stacktrace:
+          key: trace
 
 writers:
   stdout:
@@ -102,15 +112,32 @@ func TestLogger(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	Register(&testFramework{ctrl})
+	stdout := NewMockWriter(ctrl)
+	file := NewMockWriter(ctrl)
+
+	Register(newTestFramework(stdout, file))
 
 	var config loggingConfig
 	assert.NoError(t, yaml.Unmarshal([]byte(testConfig), &config))
+
+	stdout.EXPECT().WithLevel().Return(stdout, nil)
+	stdout.EXPECT().WithLevelFormat(gomock.Eq(UpperCaseLevelFormat)).Return(stdout, nil)
+	stdout.EXPECT().WithTime().Return(stdout, nil)
+	stdout.EXPECT().WithTimeFormat(gomock.Eq(ISO8601TimeFormat)).Return(stdout, nil)
+	stdout.EXPECT().WithCaller().Return(stdout, nil)
+	stdout.EXPECT().WithCallerFormat(gomock.Eq(ShortCallerFormat)).Return(stdout, nil)
+
+	file.EXPECT().WithLevel().Return(file, nil)
+	file.EXPECT().WithLevelFormat(gomock.Eq(LowerCaseLevelFormat)).Return(file, nil)
+	file.EXPECT().WithTime().Return(file, nil)
+	file.EXPECT().WithTimeKey(gomock.Eq("timestamp")).Return(file, nil)
+	file.EXPECT().WithCaller().Return(file, nil)
+	file.EXPECT().WithStacktrace().Return(file, nil)
+	file.EXPECT().WithStacktraceKey(gomock.Eq("trace")).Return(file, nil)
+
 	assert.NoError(t, configure(config))
 
 	var log = root
-	writer, _ := log.(*dazlLogger).writers.Load("stdout")
-	stdout := writer.(*MockWriter)
 
 	stdout.EXPECT().WithName(gomock.Eq("test")).Return(stdout)
 	log = GetLogger("test")
@@ -148,10 +175,8 @@ func TestLogger(t *testing.T) {
 	log.Warn("warn")
 
 	stdout.EXPECT().WithName(gomock.Eq("test/sample/outputs")).Return(stdout)
+	file.EXPECT().WithName(gomock.Eq("test/sample/outputs")).Return(file)
 	log = GetLogger("test/sample/outputs")
-
-	writer, _ = log.(*dazlLogger).writers.Load("file")
-	file := writer.(*MockWriter)
 
 	stdout.EXPECT().Error(gomock.Eq("error"))
 	file.EXPECT().Error(gomock.Eq("error"))
@@ -219,14 +244,19 @@ func TestLogger(t *testing.T) {
 	log.Warn("warn")
 }
 
+func newTestFramework(writers ...Writer) Framework {
+	return &testFramework{
+		writers: writers,
+	}
+}
+
 type testFramework struct {
-	ctrl *gomock.Controller
+	writers []Writer
+	index   int
 }
 
 func (f *testFramework) NewWriter(io.Writer, Encoding) (Writer, error) {
-	writer := NewMockWriter(f.ctrl)
-	writer.EXPECT().WithName(gomock.Any()).DoAndReturn(func(name string) Writer {
-		return writer
-	})
+	writer := f.writers[f.index]
+	f.index++
 	return writer, nil
 }

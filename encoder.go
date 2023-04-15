@@ -5,6 +5,7 @@
 package dazl
 
 import (
+	"errors"
 	"fmt"
 	"gopkg.in/yaml.v3"
 )
@@ -15,6 +16,235 @@ const (
 	ConsoleEncoding Encoding = "console"
 	JSONEncoding    Encoding = "json"
 )
+
+func newEncoder(encoding Encoding, config encodersConfig) encoder {
+	switch encoding {
+	case ConsoleEncoding:
+		return &consoleEncoder{
+			config: config.Console,
+		}
+	case JSONEncoding:
+		return &jsonEncoder{
+			config: config.JSON,
+		}
+	default:
+		panic(fmt.Sprintf("unkown encoding '%s'", encoding))
+	}
+}
+
+type encoder interface {
+	configure(writer Writer) (Writer, error)
+}
+
+type consoleEncoder struct {
+	config encoderConfig
+}
+
+func (e *consoleEncoder) configure(writer Writer) (Writer, error) {
+	var err error
+	if e.config.Fields.Level != nil {
+		if levelWriter, ok := writer.(LevelWriter); ok {
+			writer, err = levelWriter.WithLevel()
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			return nil, errors.New("level is not an optional field for the configured writer")
+		}
+		if e.config.Fields.Level.Format != nil {
+			if levelFormattingWriter, ok := writer.(LevelFormattingWriter); ok {
+				writer, err = levelFormattingWriter.WithLevelFormat(*e.config.Fields.Level.Format)
+				if err != nil {
+					return nil, err
+				}
+			} else {
+				return nil, errors.New("the configured writer does not support configuring level formats")
+			}
+		}
+	}
+	if e.config.Fields.Time != nil {
+		if timeWriter, ok := writer.(TimeWriter); ok {
+			writer, err = timeWriter.WithTime()
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			return nil, errors.New("time is not an optional field for the configured writer")
+		}
+		if e.config.Fields.Time.Format != nil {
+			if timeFormattingWriter, ok := writer.(TimeFormattingWriter); ok {
+				writer, err = timeFormattingWriter.WithTimeFormat(*e.config.Fields.Time.Format)
+				if err != nil {
+					return nil, err
+				}
+			} else {
+				return nil, errors.New("the configured writer does not support configuring time formats")
+			}
+		}
+	}
+	if e.config.Fields.Caller != nil {
+		if callerWriter, ok := writer.(CallerWriter); ok {
+			writer, err = callerWriter.WithCaller()
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			return nil, errors.New("caller is not an optional field for the configured writer")
+		}
+		if e.config.Fields.Caller.Format != nil {
+			if callerFormattingWriter, ok := writer.(CallerFormattingWriter); ok {
+				writer, err = callerFormattingWriter.WithCallerFormat(*e.config.Fields.Caller.Format)
+				if err != nil {
+					return nil, err
+				}
+			} else {
+				return nil, errors.New("the configured writer does not support configuring caller formats")
+			}
+		}
+	}
+	if e.config.Fields.Stacktrace != nil {
+		if stacktraceWriter, ok := writer.(StacktraceWriter); ok {
+			writer, err = stacktraceWriter.WithStacktrace()
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			return nil, errors.New("stacktrace is not an optional field for the configured writer")
+		}
+	}
+	return writer, nil
+}
+
+type jsonEncoder struct {
+	config encoderConfig
+}
+
+func (e *jsonEncoder) configure(writer Writer) (Writer, error) {
+	var err error
+	if e.config.Fields.Message != nil {
+		if e.config.Fields.Message.Key != "" {
+			if messageKeyWriter, ok := writer.(MessageKeyWriter); ok {
+				writer, err = messageKeyWriter.WithMessageKey(e.config.Fields.Message.Key)
+				if err != nil {
+					return nil, err
+				}
+			} else {
+				return nil, errors.New("the configured writer does not support configuring message keys")
+			}
+		}
+	}
+	if e.config.Fields.Level != nil {
+		if levelWriter, ok := writer.(LevelWriter); ok {
+			writer, err = levelWriter.WithLevel()
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			return nil, errors.New("level is not an optional field for the configured writer")
+		}
+		if e.config.Fields.Level.Key != "" {
+			if levelKeyWriter, ok := writer.(LevelKeyWriter); ok {
+				writer, err = levelKeyWriter.WithLevelKey(e.config.Fields.Level.Key)
+				if err != nil {
+					return nil, err
+				}
+			} else {
+				return nil, errors.New("the configured writer does not support configuring level keys")
+			}
+		}
+		if e.config.Fields.Level.Format != nil {
+			if levelFormattingWriter, ok := writer.(LevelFormattingWriter); ok {
+				writer, err = levelFormattingWriter.WithLevelFormat(*e.config.Fields.Level.Format)
+				if err != nil {
+					return nil, err
+				}
+			} else {
+				return nil, errors.New("the configured writer does not support configuring level formats")
+			}
+		}
+	}
+	if e.config.Fields.Time != nil {
+		if timeWriter, ok := writer.(TimeWriter); ok {
+			writer, err = timeWriter.WithTime()
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			return nil, errors.New("time is not an optional field for the configured writer")
+		}
+		if e.config.Fields.Time.Key != "" {
+			if timeKeyWriter, ok := writer.(TimeKeyWriter); ok {
+				writer, err = timeKeyWriter.WithTimeKey(e.config.Fields.Time.Key)
+				if err != nil {
+					return nil, err
+				}
+			} else {
+				return nil, errors.New("the configured writer does not support configuring time keys")
+			}
+		}
+		if e.config.Fields.Time.Format != nil {
+			if timeFormattingWriter, ok := writer.(TimeFormattingWriter); ok {
+				writer, err = timeFormattingWriter.WithTimeFormat(*e.config.Fields.Time.Format)
+				if err != nil {
+					return nil, err
+				}
+			} else {
+				return nil, errors.New("the configured writer does not support configuring time formats")
+			}
+		}
+	}
+	if e.config.Fields.Caller != nil {
+		if callerWriter, ok := writer.(CallerWriter); ok {
+			writer, err = callerWriter.WithCaller()
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			return nil, errors.New("caller is not an optional field for the configured writer")
+		}
+		if e.config.Fields.Caller.Key != "" {
+			if callerKeyWriter, ok := writer.(CallerKeyWriter); ok {
+				writer, err = callerKeyWriter.WithCallerKey(e.config.Fields.Caller.Key)
+				if err != nil {
+					return nil, err
+				}
+			} else {
+				return nil, errors.New("the configured writer does not support configuring caller keys")
+			}
+		}
+		if e.config.Fields.Caller.Format != nil {
+			if callerFormattingWriter, ok := writer.(CallerFormattingWriter); ok {
+				writer, err = callerFormattingWriter.WithCallerFormat(*e.config.Fields.Caller.Format)
+				if err != nil {
+					return nil, err
+				}
+			} else {
+				return nil, errors.New("the configured writer does not support configuring caller formats")
+			}
+		}
+	}
+	if e.config.Fields.Stacktrace != nil {
+		if stacktraceWriter, ok := writer.(StacktraceWriter); ok {
+			writer, err = stacktraceWriter.WithStacktrace()
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			return nil, errors.New("stacktrace is not an optional field for the configured writer")
+		}
+		if e.config.Fields.Stacktrace.Key != "" {
+			if stacktraceKeyWriter, ok := writer.(StacktraceKeyWriter); ok {
+				writer, err = stacktraceKeyWriter.WithStacktraceKey(e.config.Fields.Stacktrace.Key)
+				if err != nil {
+					return nil, err
+				}
+			} else {
+				return nil, errors.New("the configured writer does not support configuring stacktrace keys")
+			}
+		}
+	}
+	return writer, nil
+}
 
 type encodersConfig struct {
 	Console encoderConfig `json:"console" yaml:"console"`
@@ -84,37 +314,21 @@ func (c *encoderFieldSchema) UnmarshalYAML(unmarshal func(any) error) error {
 			return err
 		}
 		name := fieldEncoderName(key)
-		field := fieldEncoderConfig{
-			Key: key,
-		}
 		switch name {
 		case messageFieldName:
-			c.Message = &messageEncoderConfig{
-				fieldEncoderConfig: field,
-			}
+			c.Message = &messageEncoderConfig{}
 			return yaml.Unmarshal(text, c.Message)
 		case levelFieldName:
-			c.Level = &levelEncoderConfig{
-				fieldEncoderConfig: field,
-				Format:             UpperCaseLevelFormat,
-			}
+			c.Level = &levelEncoderConfig{}
 			return yaml.Unmarshal(text, c.Level)
 		case timeFieldName:
-			c.Time = &timeEncoderConfig{
-				fieldEncoderConfig: field,
-				Format:             ISO8601TimeFormat,
-			}
+			c.Time = &timeEncoderConfig{}
 			return yaml.Unmarshal(text, c.Time)
 		case callerFieldName:
-			c.Caller = &callerEncoderConfig{
-				fieldEncoderConfig: field,
-				Format:             ShortCallerFormat,
-			}
+			c.Caller = &callerEncoderConfig{}
 			return yaml.Unmarshal(text, c.Caller)
 		case stacktraceFieldName:
-			c.Stacktrace = &stacktraceEncoderConfig{
-				fieldEncoderConfig: field,
-			}
+			c.Stacktrace = &stacktraceEncoderConfig{}
 			return yaml.Unmarshal(text, c.Stacktrace)
 		default:
 			return fmt.Errorf("unknown field encoder '%s'", name)
@@ -125,33 +339,17 @@ func (c *encoderFieldSchema) UnmarshalYAML(unmarshal func(any) error) error {
 
 func (c *encoderFieldSchema) UnmarshalText(text []byte) error {
 	name := fieldEncoderName(text)
-	field := fieldEncoderConfig{
-		Key: string(text),
-	}
 	switch name {
 	case messageFieldName:
-		c.Message = &messageEncoderConfig{
-			fieldEncoderConfig: field,
-		}
+		c.Message = &messageEncoderConfig{}
 	case levelFieldName:
-		c.Level = &levelEncoderConfig{
-			fieldEncoderConfig: field,
-			Format:             UpperCaseLevelFormat,
-		}
+		c.Level = &levelEncoderConfig{}
 	case timeFieldName:
-		c.Time = &timeEncoderConfig{
-			fieldEncoderConfig: field,
-			Format:             ISO8601TimeFormat,
-		}
+		c.Time = &timeEncoderConfig{}
 	case callerFieldName:
-		c.Caller = &callerEncoderConfig{
-			fieldEncoderConfig: field,
-			Format:             ShortCallerFormat,
-		}
+		c.Caller = &callerEncoderConfig{}
 	case stacktraceFieldName:
-		c.Stacktrace = &stacktraceEncoderConfig{
-			fieldEncoderConfig: field,
-		}
+		c.Stacktrace = &stacktraceEncoderConfig{}
 	default:
 		return fmt.Errorf("unknown field encoder '%s'", name)
 	}
@@ -176,15 +374,6 @@ type messageEncoderConfig struct {
 	fieldEncoderConfig `json:",inline" yaml:",inline"`
 }
 
-func (c *messageEncoderConfig) UnmarshalText(text []byte) error {
-	if len(text) == 0 {
-		c.Key = string(messageFieldName)
-	} else {
-		c.Key = string(text)
-	}
-	return nil
-}
-
 type LevelFormat string
 
 const (
@@ -192,31 +381,9 @@ const (
 	UpperCaseLevelFormat LevelFormat = "uppercase"
 )
 
-func (f *LevelFormat) UnmarshalText(text []byte) error {
-	format := LevelFormat(text)
-	switch format {
-	case LowerCaseLevelFormat, UpperCaseLevelFormat:
-		*f = format
-	case "":
-		*f = UpperCaseLevelFormat
-	default:
-		return fmt.Errorf("unknown level format '%s'", format)
-	}
-	return nil
-}
-
 type levelEncoderConfig struct {
 	fieldEncoderConfig `json:",inline" yaml:",inline"`
-	Format             LevelFormat `json:"format" yaml:"format"`
-}
-
-func (c *levelEncoderConfig) UnmarshalText(text []byte) error {
-	if len(text) == 0 {
-		c.Key = string(levelFieldName)
-	} else {
-		c.Key = string(text)
-	}
-	return nil
+	Format             *LevelFormat `json:"format" yaml:"format"`
 }
 
 type TimeFormat string
@@ -226,76 +393,23 @@ const (
 	UnixTimeFormat    TimeFormat = "unix"
 )
 
-func (f *TimeFormat) UnmarshalText(text []byte) error {
-	format := TimeFormat(text)
-	switch format {
-	case ISO8601TimeFormat, UnixTimeFormat:
-		*f = format
-	case "":
-		*f = ISO8601TimeFormat
-	default:
-		return fmt.Errorf("unknown time format '%s'", format)
-	}
-	return nil
-}
-
 type timeEncoderConfig struct {
 	fieldEncoderConfig `json:",inline" yaml:",inline"`
-	Format             TimeFormat `json:"format" yaml:"format"`
-}
-
-func (c *timeEncoderConfig) UnmarshalText(text []byte) error {
-	if len(text) == 0 {
-		c.Key = string(timeFieldName)
-	} else {
-		c.Key = string(text)
-	}
-	return nil
+	Format             *TimeFormat `json:"format" yaml:"format"`
 }
 
 type CallerFormat string
 
 const (
 	ShortCallerFormat CallerFormat = "short"
-	FulCallerFormat   CallerFormat = "full"
+	FullCallerFormat  CallerFormat = "full"
 )
-
-func (f *CallerFormat) UnmarshalText(text []byte) error {
-	format := CallerFormat(text)
-	switch format {
-	case ShortCallerFormat, FulCallerFormat:
-		*f = format
-	case "":
-		*f = ShortCallerFormat
-	default:
-		return fmt.Errorf("unknown caller format '%s'", format)
-	}
-	return nil
-}
 
 type callerEncoderConfig struct {
 	fieldEncoderConfig `json:",inline" yaml:",inline"`
-	Format             CallerFormat `json:"format" yaml:"format"`
-}
-
-func (c *callerEncoderConfig) UnmarshalText(text []byte) error {
-	if len(text) == 0 {
-		c.Key = string(callerFieldName)
-	} else {
-		c.Key = string(text)
-	}
-	return nil
+	Format             *CallerFormat `json:"format" yaml:"format"`
 }
 
 type stacktraceEncoderConfig struct {
 	fieldEncoderConfig `json:",inline" yaml:",inline"`
-}
-
-func (c *stacktraceEncoderConfig) UnmarshalText(text []byte) error {
-	if len(text) == 0 {
-		c.Key = string(stacktraceFieldName)
-	} else {
-		c.Key = string(text)
-	}
-	return nil
 }
