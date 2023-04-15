@@ -90,7 +90,7 @@ loggers:
     sample:
       basic: 
         interval: 2
-        minLevel: warn
+        maxLevel: warn
   test/sample/outputs:
     outputs:
       - file
@@ -107,7 +107,7 @@ loggers:
           sample:
             basic:
               interval: 2
-              minLevel: warn
+              maxLevel: warn
 `
 
 func TestLogger(t *testing.T) {

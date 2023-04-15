@@ -7,7 +7,6 @@ package dazl
 import (
 	"fmt"
 	"math/rand"
-	"strconv"
 	"sync/atomic"
 )
 
@@ -28,7 +27,7 @@ func (c *samplingConfig) UnmarshalText(text []byte) error {
 	switch name {
 	case basicSamplingStintervalgy:
 		c.Basic = &basicSamplerConfig{
-			Interval: 1,
+			Interval: 10,
 		}
 	case randomSamplingStintervalgy:
 		c.Random = &randomSamplerConfig{
@@ -41,21 +40,12 @@ func (c *samplingConfig) UnmarshalText(text []byte) error {
 }
 
 type samplerConfig struct {
-	MinLevel levelConfig `json:"minLevel" yaml:"minLevel"`
+	MaxLevel levelConfig `json:"maxLevel" yaml:"maxLevel"`
 }
 
 type basicSamplerConfig struct {
 	samplerConfig `json:",inline" yaml:",inline"`
 	Interval      int `json:"interval" yaml:"interval"`
-}
-
-func (c *basicSamplerConfig) UnmarshalText(text []byte) error {
-	i, err := strconv.Atoi(string(text))
-	if err != nil {
-		return err
-	}
-	c.Interval = i
-	return nil
 }
 
 type randomSamplerConfig struct {

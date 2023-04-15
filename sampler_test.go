@@ -10,42 +10,32 @@ import (
 	"testing"
 )
 
-const testSampler = `
-
-`
-
 func TestUnmarshalSampler(t *testing.T) {
-	text := "counting: 10"
+	text := `
+basic:
+  interval: 10
+  maxLevel: info
+`
 	config := &samplingConfig{}
 	assert.NoError(t, yaml.Unmarshal([]byte(text), config))
 	assert.NotNil(t, config.Basic)
 	assert.Nil(t, config.Random)
 	assert.Equal(t, 10, config.Basic.Interval)
-	assert.Nil(t, config.Basic.MinLevel)
-
-	text = `counting:
-  count: 10
-  level: info
-`
-	config = &samplingConfig{}
-	assert.NoError(t, yaml.Unmarshal([]byte(text), config))
-	assert.NotNil(t, config.Basic)
-	assert.Nil(t, config.Random)
-	assert.Equal(t, 10, config.Basic.Interval)
-	assert.Equal(t, InfoLevel, config.Basic.MinLevel.Level())
+	assert.Equal(t, InfoLevel, config.Basic.MaxLevel.Level())
 
 	text = "random"
 	config = &samplingConfig{}
 	assert.NoError(t, yaml.Unmarshal([]byte(text), config))
 	assert.Nil(t, config.Basic)
 	assert.NotNil(t, config.Random)
-	assert.Nil(t, config.Random.MinLevel)
+	assert.Equal(t, EmptyLevel, config.Random.MaxLevel.Level())
 
-	text = `random:
-  level: info`
+	text = `
+random:
+  maxLevel: info`
 	config = &samplingConfig{}
 	assert.NoError(t, yaml.Unmarshal([]byte(text), config))
 	assert.Nil(t, config.Basic)
 	assert.NotNil(t, config.Random)
-	assert.Equal(t, InfoLevel, config.Random.MinLevel.Level())
+	assert.Equal(t, InfoLevel, config.Random.MaxLevel.Level())
 }

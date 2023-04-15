@@ -143,12 +143,12 @@ func newLogger(context *loggingContext, parent *dazlLogger, name string) (*dazlL
 	if config.Sample.Basic != nil {
 		logger.sampler = &basicSampler{
 			Interval: uint32(config.Sample.Basic.Interval),
-			MinLevel: config.Sample.Basic.MinLevel.Level(),
+			MinLevel: config.Sample.Basic.MaxLevel.Level(),
 		}
 	} else if config.Sample.Random != nil {
 		logger.sampler = randomSampler{
 			Interval: config.Sample.Random.Interval,
-			MinLevel: config.Sample.Random.MinLevel.Level(),
+			MinLevel: config.Sample.Random.MaxLevel.Level(),
 		}
 	}
 
@@ -178,7 +178,7 @@ func newLogger(context *loggingContext, parent *dazlLogger, name string) (*dazlL
 			if samplingWriter, ok := output.Writer().(BasicSamplingWriter); ok {
 				writer, err := samplingWriter.WithBasicSampler(
 					outputConfig.Sample.Basic.Interval,
-					outputConfig.Sample.Basic.MinLevel.Level())
+					outputConfig.Sample.Basic.MaxLevel.Level())
 				if err != nil {
 					return nil, err
 				}
@@ -186,12 +186,12 @@ func newLogger(context *loggingContext, parent *dazlLogger, name string) (*dazlL
 			} else {
 				output = output.WithSampler(&basicSampler{
 					Interval: uint32(outputConfig.Sample.Basic.Interval),
-					MinLevel: outputConfig.Sample.Basic.MinLevel.Level(),
+					MinLevel: outputConfig.Sample.Basic.MaxLevel.Level(),
 				})
 			}
 		} else if outputConfig.Sample.Random != nil {
 			if samplingWriter, ok := output.Writer().(RandomSamplingWriter); ok {
-				writer, err := samplingWriter.WithRandomSampler(outputConfig.Sample.Random.Interval, outputConfig.Sample.Random.MinLevel.Level())
+				writer, err := samplingWriter.WithRandomSampler(outputConfig.Sample.Random.Interval, outputConfig.Sample.Random.MaxLevel.Level())
 				if err != nil {
 					return nil, err
 				}
@@ -199,7 +199,7 @@ func newLogger(context *loggingContext, parent *dazlLogger, name string) (*dazlL
 			} else {
 				output = output.WithSampler(randomSampler{
 					Interval: outputConfig.Sample.Random.Interval,
-					MinLevel: outputConfig.Sample.Random.MinLevel.Level(),
+					MinLevel: outputConfig.Sample.Random.MaxLevel.Level(),
 				})
 			}
 		}

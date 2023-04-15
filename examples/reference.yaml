@@ -124,7 +124,7 @@ rootLogger:
         sample:
           basic:
             interval: 10
-            minLevel: info
+            maxLevel: info
     - file
 
 # 'loggers' is a mapping of logger paths to their configuration.
