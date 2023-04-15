@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"gopkg.in/yaml.v3"
 	"io"
+	"strings"
 )
 
 type Encoding string
@@ -76,24 +77,6 @@ type StacktraceEncoder interface {
 
 type StacktraceKeyEncoder interface {
 	WithStacktraceKey(key string) (Encoder, error)
-}
-
-func newEncoder(config loggingConfig, encoding Encoding) (Encoder, error) {
-	framework := getFramework()
-	switch encoding {
-	case ConsoleEncoding:
-		if consoleFramework, ok := framework.(ConsoleEncodingFramework); ok {
-			return configureConsoleEncoder(config.Encoders.Console, consoleFramework.ConsoleEncoder())
-		}
-		return nil, fmt.Errorf("%s framework does not support console encoding", framework.Name())
-	case JSONEncoding:
-		if consoleFramework, ok := framework.(JSONEncodingFramework); ok {
-			return configureJSONEncoder(config.Encoders.Console, consoleFramework.JSONEncoder())
-		}
-		return nil, fmt.Errorf("%s framework does not support JSON encoding", framework.Name())
-	default:
-		return nil, fmt.Errorf("unkown encoding '%s'", encoding)
-	}
 }
 
 func configureConsoleEncoder(config encoderConfig, encoder Encoder) (Encoder, error) {
@@ -478,6 +461,23 @@ const (
 	UpperCaseLevelFormat LevelFormat = "uppercase"
 )
 
+func (f LevelFormat) String() string {
+	return string(f)
+}
+
+func (f *LevelFormat) UnmarshalText(text []byte) error {
+	name := string(text)
+	switch strings.ToLower(name) {
+	case LowerCaseLevelFormat.String():
+		*f = LowerCaseLevelFormat
+	case UpperCaseLevelFormat.String():
+		*f = UpperCaseLevelFormat
+	default:
+		return fmt.Errorf("unknown level format '%s'", name)
+	}
+	return nil
+}
+
 type levelEncoderConfig struct {
 	fieldEncoderConfig `json:",inline" yaml:",inline"`
 	Format             *LevelFormat `json:"format" yaml:"format"`
@@ -490,6 +490,23 @@ const (
 	UnixTimestampFormat    TimestampFormat = "unix"
 )
 
+func (f TimestampFormat) String() string {
+	return string(f)
+}
+
+func (f *TimestampFormat) UnmarshalText(text []byte) error {
+	name := string(text)
+	switch strings.ToLower(name) {
+	case ISO8601TimestampFormat.String():
+		*f = ISO8601TimestampFormat
+	case UnixTimestampFormat.String():
+		*f = UnixTimestampFormat
+	default:
+		return fmt.Errorf("unknown timestamp format '%s'", name)
+	}
+	return nil
+}
+
 type timestampEncoderConfig struct {
 	fieldEncoderConfig `json:",inline" yaml:",inline"`
 	Format             *TimestampFormat `json:"format" yaml:"format"`
@@ -501,6 +518,23 @@ const (
 	ShortCallerFormat CallerFormat = "short"
 	FullCallerFormat  CallerFormat = "full"
 )
+
+func (f CallerFormat) String() string {
+	return string(f)
+}
+
+func (f *CallerFormat) UnmarshalText(text []byte) error {
+	name := string(text)
+	switch strings.ToLower(name) {
+	case ShortCallerFormat.String():
+		*f = ShortCallerFormat
+	case FullCallerFormat.String():
+		*f = FullCallerFormat
+	default:
+		return fmt.Errorf("unknown caller format '%s'", name)
+	}
+	return nil
+}
 
 type callerEncoderConfig struct {
 	fieldEncoderConfig `json:",inline" yaml:",inline"`
