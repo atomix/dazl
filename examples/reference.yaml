@@ -22,7 +22,7 @@ encoders:
           # The level format: 'uppercase' or 'lowercase'
           format: uppercase
       # The time at which the message was logged
-      - time:
+      - timestamp:
           # The time format: 'iso8601' or 'unix'
           format: iso8601
       # The line of code at which the message was logged
@@ -53,7 +53,7 @@ encoders:
           # The level format: 'uppercase' or 'lowercase'
           format: uppercase
       # The time at which the message was logged
-      - time:
+      - timestamp:
           # The JSON key for the field
           key: time
           # The time format: 'iso8601' or 'unix'
@@ -68,8 +68,6 @@ encoders:
       - stacktrace:
           # The JSON key for the field
           key: trace
-      # The log stacktrace
-      - stacktrace
 
 # A set of named writers for loggers to write to.
 # All writers must specify an 'encoder' to use
@@ -110,23 +108,24 @@ rootLogger:
   #       rate of 1/interval
   #     - 'minLevel' is the minimum level at which messages will be sampled
   sample: random
+  # 'outputs' is a list of outputs to which to write the logs.
+  # Each item of the list is either the name of the writer to which to output the logs
+  # or the writer and its configuration for this particular output.
   outputs:
-    stdout:
-      writer: stdout
-      level: info
-      # 'sample' is the sampling configuration for this output. By defaut, all messages
-      # are logged to the output.
-      #   - 'counting' configures the counting sampler
-      #     - 'count' configures the sampler to write every n messages to the output
-      #     - 'level' is the level at/above which messages will be sampled
-      #   - 'random' configures the random sampler
-      #     - 'level' is the level at/above which messages will be sampled
-      sample:
-        basic:
-          interval: 10
-          minLevel: info
-    file:
-      writer: file
+    - stdout:
+        level: info
+        # 'sample' is the sampling configuration for this output. By defaut, all messages
+        # are logged to the output.
+        #   - 'counting' configures the counting sampler
+        #     - 'count' configures the sampler to write every n messages to the output
+        #     - 'level' is the level at/above which messages will be sampled
+        #   - 'random' configures the random sampler
+        #     - 'level' is the level at/above which messages will be sampled
+        sample:
+          basic:
+            interval: 10
+            minLevel: info
+    - file
 
 # 'loggers' is a mapping of logger paths to their configuration.
 # All loggers inherit their default configuration from the 'rootLogger'.
