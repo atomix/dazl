@@ -21,7 +21,7 @@ func TestUnmarshalSampler(t *testing.T) {
 	assert.NotNil(t, config.Basic)
 	assert.Nil(t, config.Random)
 	assert.Equal(t, 10, config.Basic.Interval)
-	assert.Nil(t, config.Basic.Level)
+	assert.Nil(t, config.Basic.MinLevel)
 
 	text = `counting:
   count: 10
@@ -32,14 +32,14 @@ func TestUnmarshalSampler(t *testing.T) {
 	assert.NotNil(t, config.Basic)
 	assert.Nil(t, config.Random)
 	assert.Equal(t, 10, config.Basic.Interval)
-	assert.Equal(t, InfoLevel, config.Basic.Level.Level())
+	assert.Equal(t, InfoLevel, config.Basic.MinLevel.Level())
 
 	text = "random"
 	config = &samplingConfig{}
 	assert.NoError(t, yaml.Unmarshal([]byte(text), config))
 	assert.Nil(t, config.Basic)
 	assert.NotNil(t, config.Random)
-	assert.Nil(t, config.Random.Level)
+	assert.Nil(t, config.Random.MinLevel)
 
 	text = `random:
   level: info`
@@ -47,5 +47,5 @@ func TestUnmarshalSampler(t *testing.T) {
 	assert.NoError(t, yaml.Unmarshal([]byte(text), config))
 	assert.Nil(t, config.Basic)
 	assert.NotNil(t, config.Random)
-	assert.Equal(t, InfoLevel, config.Random.Level.Level())
+	assert.Equal(t, InfoLevel, config.Random.MinLevel.Level())
 }

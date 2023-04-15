@@ -41,7 +41,7 @@ func (c *samplingConfig) UnmarshalText(text []byte) error {
 }
 
 type samplerConfig struct {
-	Level *levelConfig `json:"level" yaml:"level"`
+	MinLevel levelConfig `json:"minLevel" yaml:"minLevel"`
 }
 
 type basicSamplerConfig struct {
@@ -75,12 +75,12 @@ func (s allSampler) Sample(level Level) bool {
 
 type basicSampler struct {
 	Interval uint32
-	Level    Level
+	MinLevel Level
 	counter  atomic.Uint32
 }
 
 func (s *basicSampler) Sample(level Level) bool {
-	if s.Level == EmptyLevel || s.Level.Enabled(level) {
+	if s.MinLevel == EmptyLevel || level.Enabled(s.MinLevel) {
 		if s.Interval == 1 {
 			return true
 		}
@@ -92,11 +92,11 @@ func (s *basicSampler) Sample(level Level) bool {
 
 type randomSampler struct {
 	Interval int
-	Level    Level
+	MinLevel Level
 }
 
 func (s randomSampler) Sample(level Level) bool {
-	if s.Level == EmptyLevel || s.Level.Enabled(level) {
+	if s.MinLevel == EmptyLevel || level.Enabled(s.MinLevel) {
 		if s.Interval <= 0 {
 			return false
 		}

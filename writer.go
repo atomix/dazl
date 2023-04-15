@@ -58,11 +58,11 @@ type StacktraceWriter interface {
 }
 
 type BasicSamplingWriter interface {
-	WithBasicSampler(interval int, level Level) (Writer, error)
+	WithBasicSampler(interval int, minLevel Level) (Writer, error)
 }
 
 type RandomSamplingWriter interface {
-	WithRandomSampler(interval int, level Level) (Writer, error)
+	WithRandomSampler(interval int, minLevel Level) (Writer, error)
 }
 
 type FieldWriter interface {
