@@ -6,6 +6,7 @@ package main
 
 import "github.com/atomix/dazl"
 import _ "github.com/atomix/dazl/zap"
+import _ "github.com/atomix/dazl/zerolog"
 
 var log = dazl.GetPackageLogger()
 

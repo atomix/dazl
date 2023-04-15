@@ -7,7 +7,6 @@ package zerolog
 import (
 	"github.com/atomix/dazl"
 	"github.com/rs/zerolog"
-	"io"
 	"time"
 )
 
@@ -21,12 +20,38 @@ func newWriter(logger zerolog.Logger) (dazl.Writer, error) {
 type Writer struct {
 	logger  zerolog.Logger
 	nameKey string
+	name    string
+}
+
+func (w *Writer) Debug(msg string) {
+	w.logger.Debug().Msg(msg)
+}
+
+func (w *Writer) Info(msg string) {
+	w.logger.Info().Msg(msg)
+}
+
+func (w *Writer) Error(msg string) {
+	w.logger.Error().Msg(msg)
+}
+
+func (w *Writer) Fatal(msg string) {
+	w.logger.Fatal().Msg(msg)
+}
+
+func (w *Writer) Panic(msg string) {
+	w.logger.Panic().Msg(msg)
+}
+
+func (w *Writer) Warn(msg string) {
+	w.logger.Warn().Msg(msg)
 }
 
 func (w *Writer) withLogger(logger zerolog.Logger) dazl.Writer {
 	return &Writer{
 		logger:  logger,
 		nameKey: w.nameKey,
+		name:    w.name,
 	}
 }
 
@@ -35,10 +60,13 @@ func (w *Writer) WithName(name string) dazl.Writer {
 		return &Writer{
 			logger:  w.logger.With().Str(w.nameKey, name).Logger(),
 			nameKey: w.nameKey,
+			name:    name,
 		}
 	}
 	return &Writer{
-		logger: w.logger,
+		logger:  w.logger,
+		nameKey: name,
+		name:    name,
 	}
 }
 
@@ -150,37 +178,5 @@ func (w *Writer) WithSkipCalls(calls int) dazl.Writer {
 	return w.withLogger(w.logger.With().CallerWithSkipFrameCount(calls).Logger())
 }
 
-func (w *Writer) Debug(msg string) {
-	w.logger.Debug().Msg(msg)
-}
-
-func (w *Writer) Info(msg string) {
-	w.logger.Info().Msg(msg)
-}
-
-func (w *Writer) Error(msg string) {
-	w.logger.Error().Msg(msg)
-}
-
-func (w *Writer) Fatal(msg string) {
-	w.logger.Fatal().Msg(msg)
-}
-
-func (w *Writer) Panic(msg string) {
-	w.logger.Panic().Msg(msg)
-}
-
-func (w *Writer) Warn(msg string) {
-	w.logger.Warn().Msg(msg)
-}
-
 var _ dazl.Writer = (*Writer)(nil)
 var _ dazl.FieldWriter = (*Writer)(nil)
-
-type writeSyncer struct {
-	io.Writer
-}
-
-func (w *writeSyncer) Sync() error {
-	return nil
-}

@@ -9,26 +9,120 @@ import (
 	"github.com/atomix/dazl"
 	"github.com/rs/zerolog"
 	"io"
+	"path/filepath"
+	"strconv"
+	"strings"
 	"time"
 )
 
-type consoleEncoder struct{}
+type consoleEncoder struct {
+	writer     zerolog.ConsoleWriter
+	nameKey    string
+	timestamp  bool
+	caller     bool
+	stacktrace bool
+}
 
-func (e *consoleEncoder) NewWriter(writer io.Writer) (dazl.Writer, error) {
+func (e *consoleEncoder) NewWriter(out io.Writer) (dazl.Writer, error) {
+	writer := e.writer
+	writer.Out = out
+	logger := zerolog.New(writer)
+	if e.timestamp {
+		logger = logger.With().Timestamp().Logger()
+	}
+	if e.caller {
+		logger = logger.With().CallerWithSkipFrameCount(5).Logger()
+	}
+	if e.stacktrace {
+		logger = logger.With().Stack().Logger()
+	}
 	return &Writer{
-		logger: zerolog.New(zerolog.ConsoleWriter{
-			Out: writer,
-		}),
+		logger:  logger,
+		nameKey: e.nameKey,
 	}, nil
 }
 
+func (e *consoleEncoder) WithNameEnabled() (dazl.Encoder, error) {
+	return &consoleEncoder{
+		nameKey: "logger",
+	}, nil
+}
+
+func (e *consoleEncoder) WithNameKey(key string) (dazl.Encoder, error) {
+	return &consoleEncoder{
+		nameKey: key,
+	}, nil
+}
+
+func (e *consoleEncoder) WithLevelEnabled() (dazl.Encoder, error) {
+	return e, nil
+}
+
+func (e *consoleEncoder) WithLevelFormat(format dazl.LevelFormat) (dazl.Encoder, error) {
+	switch format {
+	case dazl.LowerCaseLevelFormat:
+		e.writer.FormatLevel = func(level interface{}) string {
+			return strings.ToLower(fmt.Sprint(level))
+		}
+		return e, nil
+	case dazl.UpperCaseLevelFormat:
+		e.writer.FormatLevel = func(level interface{}) string {
+			return strings.ToUpper(fmt.Sprint(level))
+		}
+		return e, nil
+	default:
+		return nil, fmt.Errorf("unsupported level format '%s'", format)
+	}
+}
+
+func (e *consoleEncoder) WithTimestampEnabled() (dazl.Encoder, error) {
+	e.timestamp = true
+	return e, nil
+}
+
+func (e *consoleEncoder) WithTimestampFormat(format dazl.TimestampFormat) (dazl.Encoder, error) {
+	switch format {
+	case dazl.UnixTimestampFormat:
+		e.writer.TimeFormat = zerolog.TimeFormatUnix
+	case dazl.ISO8601TimestampFormat:
+		e.writer.TimeFormat = time.RFC3339
+	default:
+		return nil, fmt.Errorf("unsupoorted timestamp format %s", format)
+	}
+	return e, nil
+}
+
+func (e *consoleEncoder) WithCallerEnabled() (dazl.Encoder, error) {
+	e.caller = true
+	return e, nil
+}
+
+func (e *consoleEncoder) WithStacktraceEnabled() (dazl.Encoder, error) {
+	e.stacktrace = true
+	return e, nil
+}
+
 type jsonEncoder struct {
-	nameKey string
+	nameKey    string
+	timestamp  bool
+	caller     bool
+	stacktrace bool
 }
 
 func (e *jsonEncoder) NewWriter(writer io.Writer) (dazl.Writer, error) {
+	logger := zerolog.New(writer)
+	if e.timestamp {
+		logger = logger.With().Timestamp().Logger()
+	}
+	if e.caller {
+		logger = logger.With().CallerWithSkipFrameCount(5).Logger()
+	}
+	if e.stacktrace {
+		logger = logger.With().Stack().Logger()
+	}
 	return &Writer{
-		logger: zerolog.New(writer),
+		logger:  logger,
+		nameKey: e.nameKey,
 	}, nil
 }
 
@@ -81,6 +175,7 @@ func (e *jsonEncoder) WithLevelFormat(format dazl.LevelFormat) (dazl.Encoder, er
 }
 
 func (e *jsonEncoder) WithTimestampEnabled() (dazl.Encoder, error) {
+	e.timestamp = true
 	return e, nil
 }
 
@@ -106,6 +201,7 @@ func (e *jsonEncoder) WithCallerEnabled() (dazl.Encoder, error) {
 }
 
 func (e *jsonEncoder) WithCallerKey(key string) (dazl.Encoder, error) {
+	e.caller = true
 	zerolog.CallerFieldName = key
 	return e, nil
 }
@@ -113,6 +209,10 @@ func (e *jsonEncoder) WithCallerKey(key string) (dazl.Encoder, error) {
 func (e *jsonEncoder) WithCallerFormat(format dazl.CallerFormat) (dazl.Encoder, error) {
 	switch format {
 	case dazl.ShortCallerFormat:
+		zerolog.CallerMarshalFunc = func(pc uintptr, file string, line int) string {
+			return filepath.Base(file) + ":" + strconv.Itoa(line)
+		}
+	case dazl.FullCallerFormat:
 	default:
 		return nil, fmt.Errorf("unsupoorted caller format %s", format)
 	}
@@ -120,6 +220,7 @@ func (e *jsonEncoder) WithCallerFormat(format dazl.CallerFormat) (dazl.Encoder, 
 }
 
 func (e *jsonEncoder) WithStacktraceEnabled() (dazl.Encoder, error) {
+	e.stacktrace = true
 	return e, nil
 }
 

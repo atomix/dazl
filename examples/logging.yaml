@@ -11,9 +11,9 @@ encoders:
           format: uppercase
       - timestamp:
           format: ISO8601
-      - caller:
-          format: short
-      - stacktrace
+      - caller #:
+          #format: short
+      #- stacktrace
   json:
     fields:
       - message:
@@ -44,4 +44,4 @@ rootLogger:
   outputs:
     - stdout:
         level: info
-    #- file
+    - file
