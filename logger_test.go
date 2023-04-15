@@ -51,19 +51,22 @@ const testConfig = `
 encoders:
   console:
     fields:
+      - name
       - message
       - level:
           format: uppercase
-      - time:
+      - timestamp:
           format: iso8601
       - caller:
           format: short
   json:
     fields:
+      - name:
+          key: logger
       - message
       - level:
           format: lowercase
-      - time:
+      - timestamp:
           key: timestamp
       - caller
       - stacktrace:
@@ -120,19 +123,22 @@ func TestLogger(t *testing.T) {
 	var config loggingConfig
 	assert.NoError(t, yaml.Unmarshal([]byte(testConfig), &config))
 
-	stdout.EXPECT().WithLevel().Return(stdout, nil)
+	stdout.EXPECT().WithNameEnabled().Return(stdout, nil)
+	stdout.EXPECT().WithLevelEnabled().Return(stdout, nil)
 	stdout.EXPECT().WithLevelFormat(gomock.Eq(UpperCaseLevelFormat)).Return(stdout, nil)
-	stdout.EXPECT().WithTime().Return(stdout, nil)
-	stdout.EXPECT().WithTimeFormat(gomock.Eq(ISO8601TimeFormat)).Return(stdout, nil)
-	stdout.EXPECT().WithCaller().Return(stdout, nil)
+	stdout.EXPECT().WithTimestampEnabled().Return(stdout, nil)
+	stdout.EXPECT().WithTimestampFormat(gomock.Eq(ISO8601TimestampFormat)).Return(stdout, nil)
+	stdout.EXPECT().WithCallerEnabled().Return(stdout, nil)
 	stdout.EXPECT().WithCallerFormat(gomock.Eq(ShortCallerFormat)).Return(stdout, nil)
 
-	file.EXPECT().WithLevel().Return(file, nil)
+	file.EXPECT().WithNameEnabled().Return(file, nil)
+	file.EXPECT().WithNameKey(gomock.Eq("logger")).Return(file, nil)
+	file.EXPECT().WithLevelEnabled().Return(file, nil)
 	file.EXPECT().WithLevelFormat(gomock.Eq(LowerCaseLevelFormat)).Return(file, nil)
-	file.EXPECT().WithTime().Return(file, nil)
-	file.EXPECT().WithTimeKey(gomock.Eq("timestamp")).Return(file, nil)
-	file.EXPECT().WithCaller().Return(file, nil)
-	file.EXPECT().WithStacktrace().Return(file, nil)
+	file.EXPECT().WithTimestampEnabled().Return(file, nil)
+	file.EXPECT().WithTimestampKey(gomock.Eq("timestamp")).Return(file, nil)
+	file.EXPECT().WithCallerEnabled().Return(file, nil)
+	file.EXPECT().WithStacktraceEnabled().Return(file, nil)
 	file.EXPECT().WithStacktraceKey(gomock.Eq("trace")).Return(file, nil)
 
 	assert.NoError(t, configure(config))

@@ -133,19 +133,49 @@ func (mr *MockWriterMockRecorder) WithMessageKey(arg0 interface{}) *gomock.Call 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WithMessageKey", reflect.TypeOf((*MockWriter)(nil).WithMessageKey), arg0)
 }
 
-// WithLevel mocks base method.
-func (m *MockWriter) WithLevel() (Writer, error) {
+// WithNameEnabled mocks base method.
+func (m *MockWriter) WithNameEnabled() (Writer, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "WithLevel")
+	ret := m.ctrl.Call(m, "WithNameEnabled")
 	ret0, _ := ret[0].(Writer)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// WithLevel indicates an expected call of WithLevel.
-func (mr *MockWriterMockRecorder) WithLevel() *gomock.Call {
+// WithNameEnabled indicates an expected call of WithNameEnabled.
+func (mr *MockWriterMockRecorder) WithNameEnabled() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WithLevel", reflect.TypeOf((*MockWriter)(nil).WithLevel))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WithNameEnabled", reflect.TypeOf((*MockWriter)(nil).WithNameEnabled))
+}
+
+// WithNameKey mocks base method.
+func (m *MockWriter) WithNameKey(arg0 string) (Writer, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WithNameKey", arg0)
+	ret0, _ := ret[0].(Writer)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WithNameKey indicates an expected call of WithNameKey.
+func (mr *MockWriterMockRecorder) WithNameKey(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WithNameKey", reflect.TypeOf((*MockWriter)(nil).WithNameKey), arg0)
+}
+
+// WithLevelEnabled mocks base method.
+func (m *MockWriter) WithLevelEnabled() (Writer, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WithLevelEnabled")
+	ret0, _ := ret[0].(Writer)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WithLevelEnabled indicates an expected call of WithLevelEnabled.
+func (mr *MockWriterMockRecorder) WithLevelEnabled() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WithLevelEnabled", reflect.TypeOf((*MockWriter)(nil).WithLevelEnabled))
 }
 
 // WithLevelKey mocks base method.
@@ -178,64 +208,64 @@ func (mr *MockWriterMockRecorder) WithLevelFormat(arg0 interface{}) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WithLevelFormat", reflect.TypeOf((*MockWriter)(nil).WithLevelFormat), arg0)
 }
 
-// WithTime mocks base method.
-func (m *MockWriter) WithTime() (Writer, error) {
+// WithTimestampEnabled mocks base method.
+func (m *MockWriter) WithTimestampEnabled() (Writer, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "WithTime")
+	ret := m.ctrl.Call(m, "WithTimestampEnabled")
 	ret0, _ := ret[0].(Writer)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// WithTime indicates an expected call of WithTime.
-func (mr *MockWriterMockRecorder) WithTime() *gomock.Call {
+// WithTimestampEnabled indicates an expected call of WithTimestampEnabled.
+func (mr *MockWriterMockRecorder) WithTimestampEnabled() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WithTime", reflect.TypeOf((*MockWriter)(nil).WithTime))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WithTimestampEnabled", reflect.TypeOf((*MockWriter)(nil).WithTimestampEnabled))
 }
 
-// WithTimeKey mocks base method.
-func (m *MockWriter) WithTimeKey(arg0 string) (Writer, error) {
+// WithTimestampKey mocks base method.
+func (m *MockWriter) WithTimestampKey(arg0 string) (Writer, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "WithTimeKey", arg0)
+	ret := m.ctrl.Call(m, "WithTimestampKey", arg0)
 	ret0, _ := ret[0].(Writer)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// WithTimeKey indicates an expected call of WithTimeKey.
-func (mr *MockWriterMockRecorder) WithTimeKey(arg0 interface{}) *gomock.Call {
+// WithTimestampKey indicates an expected call of WithTimestampKey.
+func (mr *MockWriterMockRecorder) WithTimestampKey(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WithTimeKey", reflect.TypeOf((*MockWriter)(nil).WithTimeKey), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WithTimestampKey", reflect.TypeOf((*MockWriter)(nil).WithTimestampKey), arg0)
 }
 
-// WithTimeFormat mocks base method.
-func (m *MockWriter) WithTimeFormat(arg0 TimeFormat) (Writer, error) {
+// WithTimestampFormat mocks base method.
+func (m *MockWriter) WithTimestampFormat(arg0 TimestampFormat) (Writer, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "WithTimeFormat", arg0)
+	ret := m.ctrl.Call(m, "WithTimestampFormat", arg0)
 	ret0, _ := ret[0].(Writer)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// WithTimeFormat indicates an expected call of WithTimeFormat.
-func (mr *MockWriterMockRecorder) WithTimeFormat(arg0 interface{}) *gomock.Call {
+// WithTimestampFormat indicates an expected call of WithTimestampFormat.
+func (mr *MockWriterMockRecorder) WithTimestampFormat(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WithTimeFormat", reflect.TypeOf((*MockWriter)(nil).WithTimeFormat), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WithTimestampFormat", reflect.TypeOf((*MockWriter)(nil).WithTimestampFormat), arg0)
 }
 
-// WithCaller mocks base method.
-func (m *MockWriter) WithCaller() (Writer, error) {
+// WithCallerEnabled mocks base method.
+func (m *MockWriter) WithCallerEnabled() (Writer, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "WithCaller")
+	ret := m.ctrl.Call(m, "WithCallerEnabled")
 	ret0, _ := ret[0].(Writer)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// WithCaller indicates an expected call of WithCaller.
-func (mr *MockWriterMockRecorder) WithCaller() *gomock.Call {
+// WithCallerEnabled indicates an expected call of WithCallerEnabled.
+func (mr *MockWriterMockRecorder) WithCallerEnabled() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WithCaller", reflect.TypeOf((*MockWriter)(nil).WithCaller))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WithCallerEnabled", reflect.TypeOf((*MockWriter)(nil).WithCallerEnabled))
 }
 
 // WithCallerKey mocks base method.
@@ -268,19 +298,19 @@ func (mr *MockWriterMockRecorder) WithCallerFormat(arg0 interface{}) *gomock.Cal
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WithCallerFormat", reflect.TypeOf((*MockWriter)(nil).WithCallerFormat), arg0)
 }
 
-// WithStacktrace mocks base method.
-func (m *MockWriter) WithStacktrace() (Writer, error) {
+// WithStacktraceEnabled mocks base method.
+func (m *MockWriter) WithStacktraceEnabled() (Writer, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "WithStacktrace")
+	ret := m.ctrl.Call(m, "WithStacktraceEnabled")
 	ret0, _ := ret[0].(Writer)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// WithStacktrace indicates an expected call of WithStacktrace.
-func (mr *MockWriterMockRecorder) WithStacktrace() *gomock.Call {
+// WithStacktraceEnabled indicates an expected call of WithStacktraceEnabled.
+func (mr *MockWriterMockRecorder) WithStacktraceEnabled() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WithStacktrace", reflect.TypeOf((*MockWriter)(nil).WithStacktrace))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WithStacktraceEnabled", reflect.TypeOf((*MockWriter)(nil).WithStacktraceEnabled))
 }
 
 // WithStacktraceKey mocks base method.

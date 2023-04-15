@@ -42,9 +42,19 @@ type consoleEncoder struct {
 
 func (e *consoleEncoder) configure(writer Writer) (Writer, error) {
 	var err error
+	if e.config.Fields.Name != nil {
+		if nameWriter, ok := writer.(NameWriter); ok {
+			writer, err = nameWriter.WithNameEnabled()
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			return nil, errors.New("level is not an optional field for the configured writer")
+		}
+	}
 	if e.config.Fields.Level != nil {
 		if levelWriter, ok := writer.(LevelWriter); ok {
-			writer, err = levelWriter.WithLevel()
+			writer, err = levelWriter.WithLevelEnabled()
 			if err != nil {
 				return nil, err
 			}
@@ -63,8 +73,8 @@ func (e *consoleEncoder) configure(writer Writer) (Writer, error) {
 		}
 	}
 	if e.config.Fields.Time != nil {
-		if timeWriter, ok := writer.(TimeWriter); ok {
-			writer, err = timeWriter.WithTime()
+		if timestampWriter, ok := writer.(TimestampWriter); ok {
+			writer, err = timestampWriter.WithTimestampEnabled()
 			if err != nil {
 				return nil, err
 			}
@@ -72,19 +82,19 @@ func (e *consoleEncoder) configure(writer Writer) (Writer, error) {
 			return nil, errors.New("time is not an optional field for the configured writer")
 		}
 		if e.config.Fields.Time.Format != nil {
-			if timeFormattingWriter, ok := writer.(TimeFormattingWriter); ok {
-				writer, err = timeFormattingWriter.WithTimeFormat(*e.config.Fields.Time.Format)
+			if timestampFormattingWriter, ok := writer.(TimestampFormattingWriter); ok {
+				writer, err = timestampFormattingWriter.WithTimestampFormat(*e.config.Fields.Time.Format)
 				if err != nil {
 					return nil, err
 				}
 			} else {
-				return nil, errors.New("the configured writer does not support configuring time formats")
+				return nil, errors.New("the configured writer does not support configuring timestamp formats")
 			}
 		}
 	}
 	if e.config.Fields.Caller != nil {
 		if callerWriter, ok := writer.(CallerWriter); ok {
-			writer, err = callerWriter.WithCaller()
+			writer, err = callerWriter.WithCallerEnabled()
 			if err != nil {
 				return nil, err
 			}
@@ -104,7 +114,7 @@ func (e *consoleEncoder) configure(writer Writer) (Writer, error) {
 	}
 	if e.config.Fields.Stacktrace != nil {
 		if stacktraceWriter, ok := writer.(StacktraceWriter); ok {
-			writer, err = stacktraceWriter.WithStacktrace()
+			writer, err = stacktraceWriter.WithStacktraceEnabled()
 			if err != nil {
 				return nil, err
 			}
@@ -133,9 +143,29 @@ func (e *jsonEncoder) configure(writer Writer) (Writer, error) {
 			}
 		}
 	}
+	if e.config.Fields.Name != nil {
+		if nameWriter, ok := writer.(NameWriter); ok {
+			writer, err = nameWriter.WithNameEnabled()
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			return nil, errors.New("name is not an optional field for the configured writer")
+		}
+		if e.config.Fields.Name.Key != "" {
+			if nameKeyWriter, ok := writer.(NameKeyWriter); ok {
+				writer, err = nameKeyWriter.WithNameKey(e.config.Fields.Name.Key)
+				if err != nil {
+					return nil, err
+				}
+			} else {
+				return nil, errors.New("the configured writer does not support configuring name keys")
+			}
+		}
+	}
 	if e.config.Fields.Level != nil {
 		if levelWriter, ok := writer.(LevelWriter); ok {
-			writer, err = levelWriter.WithLevel()
+			writer, err = levelWriter.WithLevelEnabled()
 			if err != nil {
 				return nil, err
 			}
@@ -164,38 +194,38 @@ func (e *jsonEncoder) configure(writer Writer) (Writer, error) {
 		}
 	}
 	if e.config.Fields.Time != nil {
-		if timeWriter, ok := writer.(TimeWriter); ok {
-			writer, err = timeWriter.WithTime()
+		if timestampWriter, ok := writer.(TimestampWriter); ok {
+			writer, err = timestampWriter.WithTimestampEnabled()
 			if err != nil {
 				return nil, err
 			}
 		} else {
-			return nil, errors.New("time is not an optional field for the configured writer")
+			return nil, errors.New("timestamp is not an optional field for the configured writer")
 		}
 		if e.config.Fields.Time.Key != "" {
-			if timeKeyWriter, ok := writer.(TimeKeyWriter); ok {
-				writer, err = timeKeyWriter.WithTimeKey(e.config.Fields.Time.Key)
+			if timestampKeyWriter, ok := writer.(TimestampKeyWriter); ok {
+				writer, err = timestampKeyWriter.WithTimestampKey(e.config.Fields.Time.Key)
 				if err != nil {
 					return nil, err
 				}
 			} else {
-				return nil, errors.New("the configured writer does not support configuring time keys")
+				return nil, errors.New("the configured writer does not support configuring timestamp keys")
 			}
 		}
 		if e.config.Fields.Time.Format != nil {
-			if timeFormattingWriter, ok := writer.(TimeFormattingWriter); ok {
-				writer, err = timeFormattingWriter.WithTimeFormat(*e.config.Fields.Time.Format)
+			if timestampFormattingWriter, ok := writer.(TimestampFormattingWriter); ok {
+				writer, err = timestampFormattingWriter.WithTimestampFormat(*e.config.Fields.Time.Format)
 				if err != nil {
 					return nil, err
 				}
 			} else {
-				return nil, errors.New("the configured writer does not support configuring time formats")
+				return nil, errors.New("the configured writer does not support configuring timestamp formats")
 			}
 		}
 	}
 	if e.config.Fields.Caller != nil {
 		if callerWriter, ok := writer.(CallerWriter); ok {
-			writer, err = callerWriter.WithCaller()
+			writer, err = callerWriter.WithCallerEnabled()
 			if err != nil {
 				return nil, err
 			}
@@ -225,7 +255,7 @@ func (e *jsonEncoder) configure(writer Writer) (Writer, error) {
 	}
 	if e.config.Fields.Stacktrace != nil {
 		if stacktraceWriter, ok := writer.(StacktraceWriter); ok {
-			writer, err = stacktraceWriter.WithStacktrace()
+			writer, err = stacktraceWriter.WithStacktraceEnabled()
 			if err != nil {
 				return nil, err
 			}
@@ -256,9 +286,10 @@ type encoderConfig struct {
 }
 
 type encoderFieldsConfig struct {
+	Name       *nameEncoderConfig       `json:"name" yaml:"name"`
 	Message    *messageEncoderConfig    `json:"message" yaml:"message"`
 	Level      *levelEncoderConfig      `json:"level" yaml:"level"`
-	Time       *timeEncoderConfig       `json:"time" yaml:"time"`
+	Time       *timestampEncoderConfig  `json:"timestamp" yaml:"timestamp"`
 	Caller     *callerEncoderConfig     `json:"caller" yaml:"caller"`
 	Stacktrace *stacktraceEncoderConfig `json:"stacktrace" yaml:"stacktrace"`
 }
@@ -269,6 +300,9 @@ func (c *encoderFieldsConfig) UnmarshalYAML(unmarshal func(any) error) error {
 		return err
 	}
 	for _, field := range fields {
+		if field.Name != nil {
+			c.Name = field.Name
+		}
 		if field.Message != nil {
 			c.Message = field.Message
 		}
@@ -289,9 +323,10 @@ func (c *encoderFieldsConfig) UnmarshalYAML(unmarshal func(any) error) error {
 }
 
 type encoderFieldSchema struct {
+	Name       *nameEncoderConfig       `json:"name" yaml:"name"`
 	Message    *messageEncoderConfig    `json:"message" yaml:"message"`
 	Level      *levelEncoderConfig      `json:"level" yaml:"level"`
-	Time       *timeEncoderConfig       `json:"time" yaml:"time"`
+	Time       *timestampEncoderConfig  `json:"timestamp" yaml:"timestamp"`
 	Caller     *callerEncoderConfig     `json:"caller" yaml:"caller"`
 	Stacktrace *stacktraceEncoderConfig `json:"stacktrace" yaml:"stacktrace"`
 }
@@ -315,14 +350,17 @@ func (c *encoderFieldSchema) UnmarshalYAML(unmarshal func(any) error) error {
 		}
 		name := fieldEncoderName(key)
 		switch name {
+		case nameFieldName:
+			c.Name = &nameEncoderConfig{}
+			return yaml.Unmarshal(text, c.Name)
 		case messageFieldName:
 			c.Message = &messageEncoderConfig{}
 			return yaml.Unmarshal(text, c.Message)
 		case levelFieldName:
 			c.Level = &levelEncoderConfig{}
 			return yaml.Unmarshal(text, c.Level)
-		case timeFieldName:
-			c.Time = &timeEncoderConfig{}
+		case timestampFieldName:
+			c.Time = &timestampEncoderConfig{}
 			return yaml.Unmarshal(text, c.Time)
 		case callerFieldName:
 			c.Caller = &callerEncoderConfig{}
@@ -340,12 +378,14 @@ func (c *encoderFieldSchema) UnmarshalYAML(unmarshal func(any) error) error {
 func (c *encoderFieldSchema) UnmarshalText(text []byte) error {
 	name := fieldEncoderName(text)
 	switch name {
+	case nameFieldName:
+		c.Name = &nameEncoderConfig{}
 	case messageFieldName:
 		c.Message = &messageEncoderConfig{}
 	case levelFieldName:
 		c.Level = &levelEncoderConfig{}
-	case timeFieldName:
-		c.Time = &timeEncoderConfig{}
+	case timestampFieldName:
+		c.Time = &timestampEncoderConfig{}
 	case callerFieldName:
 		c.Caller = &callerEncoderConfig{}
 	case stacktraceFieldName:
@@ -359,15 +399,20 @@ func (c *encoderFieldSchema) UnmarshalText(text []byte) error {
 type fieldEncoderName string
 
 const (
+	nameFieldName       fieldEncoderName = "name"
 	messageFieldName    fieldEncoderName = "message"
 	levelFieldName      fieldEncoderName = "level"
-	timeFieldName       fieldEncoderName = "time"
+	timestampFieldName  fieldEncoderName = "timestamp"
 	callerFieldName     fieldEncoderName = "caller"
 	stacktraceFieldName fieldEncoderName = "stacktrace"
 )
 
 type fieldEncoderConfig struct {
 	Key string `json:"key" yaml:"key"`
+}
+
+type nameEncoderConfig struct {
+	fieldEncoderConfig `json:",inline" yaml:",inline"`
 }
 
 type messageEncoderConfig struct {
@@ -386,16 +431,16 @@ type levelEncoderConfig struct {
 	Format             *LevelFormat `json:"format" yaml:"format"`
 }
 
-type TimeFormat string
+type TimestampFormat string
 
 const (
-	ISO8601TimeFormat TimeFormat = "iso8601"
-	UnixTimeFormat    TimeFormat = "unix"
+	ISO8601TimestampFormat TimestampFormat = "iso8601"
+	UnixTimestampFormat    TimestampFormat = "unix"
 )
 
-type timeEncoderConfig struct {
+type timestampEncoderConfig struct {
 	fieldEncoderConfig `json:",inline" yaml:",inline"`
-	Format             *TimeFormat `json:"format" yaml:"format"`
+	Format             *TimestampFormat `json:"format" yaml:"format"`
 }
 
 type CallerFormat string

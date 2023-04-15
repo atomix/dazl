@@ -16,7 +16,7 @@ console:
     - message
     - level:
         key: the-level
-    - time:
+    - timestamp:
         format: unix
     - caller
 json:
@@ -24,7 +24,7 @@ json:
     - message
     - level:
         format: lowercase
-    - time:
+    - timestamp:
         key: timestamp
     - caller:
         format: full
@@ -49,7 +49,7 @@ func TestUnmarshalEncoders(t *testing.T) {
 	assert.Nil(t, encoders.Console.Fields.Level.Format)
 	assert.NotNil(t, encoders.Console.Fields.Time.Format)
 	assert.Nil(t, encoders.Console.Fields.Caller.Format)
-	assert.Equal(t, UnixTimeFormat, *encoders.Console.Fields.Time.Format)
+	assert.Equal(t, UnixTimestampFormat, *encoders.Console.Fields.Time.Format)
 
 	assert.NotNil(t, encoders.JSON)
 	assert.NotNil(t, encoders.JSON.Fields.Message)

@@ -27,12 +27,20 @@ type CallSkippingWriter interface {
 	WithSkipCalls(calls int) Writer
 }
 
+type NameWriter interface {
+	WithNameEnabled() (Writer, error)
+}
+
+type NameKeyWriter interface {
+	WithNameKey(key string) (Writer, error)
+}
+
 type MessageKeyWriter interface {
 	WithMessageKey(key string) (Writer, error)
 }
 
 type LevelWriter interface {
-	WithLevel() (Writer, error)
+	WithLevelEnabled() (Writer, error)
 }
 
 type LevelKeyWriter interface {
@@ -43,20 +51,20 @@ type LevelFormattingWriter interface {
 	WithLevelFormat(format LevelFormat) (Writer, error)
 }
 
-type TimeWriter interface {
-	WithTime() (Writer, error)
+type TimestampWriter interface {
+	WithTimestampEnabled() (Writer, error)
 }
 
-type TimeKeyWriter interface {
-	WithTimeKey(key string) (Writer, error)
+type TimestampKeyWriter interface {
+	WithTimestampKey(key string) (Writer, error)
 }
 
-type TimeFormattingWriter interface {
-	WithTimeFormat(format TimeFormat) (Writer, error)
+type TimestampFormattingWriter interface {
+	WithTimestampFormat(format TimestampFormat) (Writer, error)
 }
 
 type CallerWriter interface {
-	WithCaller() (Writer, error)
+	WithCallerEnabled() (Writer, error)
 }
 
 type CallerKeyWriter interface {
@@ -68,7 +76,7 @@ type CallerFormattingWriter interface {
 }
 
 type StacktraceWriter interface {
-	WithStacktrace() (Writer, error)
+	WithStacktraceEnabled() (Writer, error)
 }
 
 type StacktraceKeyWriter interface {
