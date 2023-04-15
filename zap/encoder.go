@@ -121,6 +121,15 @@ func (e *consoleEncoder) NewWriter(writer io.Writer) (dazl.Writer, error) {
 	return newWriter(writer, zapcore.NewConsoleEncoder(e.config), config)
 }
 
+var _ dazl.NameEncoder = (*consoleEncoder)(nil)
+var _ dazl.LevelEncoder = (*consoleEncoder)(nil)
+var _ dazl.LevelFormattingEncoder = (*consoleEncoder)(nil)
+var _ dazl.TimestampEncoder = (*consoleEncoder)(nil)
+var _ dazl.TimestampFormattingEncoder = (*consoleEncoder)(nil)
+var _ dazl.CallerEncoder = (*consoleEncoder)(nil)
+var _ dazl.CallerFormattingEncoder = (*consoleEncoder)(nil)
+var _ dazl.StacktraceEncoder = (*consoleEncoder)(nil)
+
 func newJSONEncoder(config zapcore.EncoderConfig) dazl.Encoder {
 	return &jsonEncoder{
 		zapEncoder: &zapEncoder{
@@ -176,3 +185,18 @@ func (e *jsonEncoder) WithStacktraceKey(key string) (dazl.Encoder, error) {
 		config.StacktraceKey = key
 	}), nil
 }
+
+var _ dazl.MessageKeyEncoder = (*jsonEncoder)(nil)
+var _ dazl.NameEncoder = (*jsonEncoder)(nil)
+var _ dazl.NameKeyEncoder = (*jsonEncoder)(nil)
+var _ dazl.LevelEncoder = (*jsonEncoder)(nil)
+var _ dazl.LevelKeyEncoder = (*jsonEncoder)(nil)
+var _ dazl.LevelFormattingEncoder = (*jsonEncoder)(nil)
+var _ dazl.TimestampEncoder = (*jsonEncoder)(nil)
+var _ dazl.TimestampKeyEncoder = (*jsonEncoder)(nil)
+var _ dazl.TimestampFormattingEncoder = (*jsonEncoder)(nil)
+var _ dazl.CallerEncoder = (*jsonEncoder)(nil)
+var _ dazl.CallerKeyEncoder = (*jsonEncoder)(nil)
+var _ dazl.CallerFormattingEncoder = (*jsonEncoder)(nil)
+var _ dazl.StacktraceEncoder = (*jsonEncoder)(nil)
+var _ dazl.StacktraceKeyEncoder = (*jsonEncoder)(nil)
