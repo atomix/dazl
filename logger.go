@@ -49,6 +49,12 @@ type Logger interface {
 	// GetLogger gets a descendant of this Logger
 	GetLogger(path string) Logger
 
+	// Level returns the logger level
+	Level() Level
+
+	// SetLevel sets the logger level
+	SetLevel(level Level)
+
 	// WithFields adds fields to the logger
 	WithFields(fields ...Field) Logger
 
@@ -335,6 +341,24 @@ func (l *dazlLogger) Level() Level {
 		return l.level
 	}
 	return l.defaultLevel
+}
+
+func (l *dazlLogger) SetLevel(level Level) {
+	l.level = level
+	l.children.Range(func(key, value any) bool {
+		value.(*dazlLogger).setDefaultLevel(level)
+		return true
+	})
+}
+
+func (l *dazlLogger) setDefaultLevel(level Level) {
+	l.defaultLevel = level
+	if l.level == EmptyLevel {
+		l.children.Range(func(key, value any) bool {
+			value.(*dazlLogger).setDefaultLevel(level)
+			return true
+		})
+	}
 }
 
 func (l *dazlLogger) GetLogger(path string) Logger {
