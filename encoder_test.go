@@ -13,12 +13,12 @@ import (
 const testEncoders = `
 console:
   fields:
-    - message
-    - level:
-        key: the-level
-    - timestamp:
-        format: unix
-    - caller
+    message:
+    level:
+      key: the-level
+    timestamp:
+      format: unix
+    caller:
 json:
   fields:
     - message

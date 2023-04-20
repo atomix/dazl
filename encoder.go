@@ -330,6 +330,49 @@ type encoderFieldsConfig struct {
 }
 
 func (c *encoderFieldsConfig) UnmarshalYAML(unmarshal func(any) error) error {
+	object := make(map[string]any)
+	if err := unmarshal(&object); err == nil {
+		for name, value := range object {
+			bytes, err := yaml.Marshal(value)
+			if err != nil {
+				return err
+			}
+			switch name {
+			case "message":
+				c.Message = &messageEncoderConfig{}
+				if err := yaml.Unmarshal(bytes, c.Message); err != nil {
+					return err
+				}
+			case "name":
+				c.Name = &nameEncoderConfig{}
+				if err := yaml.Unmarshal(bytes, c.Name); err != nil {
+					return err
+				}
+			case "level":
+				c.Level = &levelEncoderConfig{}
+				if err := yaml.Unmarshal(bytes, c.Level); err != nil {
+					return err
+				}
+			case "timestamp":
+				c.Time = &timestampEncoderConfig{}
+				if err := yaml.Unmarshal(bytes, c.Time); err != nil {
+					return err
+				}
+			case "caller":
+				c.Caller = &callerEncoderConfig{}
+				if err := yaml.Unmarshal(bytes, c.Caller); err != nil {
+					return err
+				}
+			case "stacktrace":
+				c.Stacktrace = &stacktraceEncoderConfig{}
+				if err := yaml.Unmarshal(bytes, c.Stacktrace); err != nil {
+					return err
+				}
+			}
+		}
+		return nil
+	}
+
 	var fields []encoderFieldSchema
 	if err := unmarshal(&fields); err != nil {
 		return err
