@@ -49,4 +49,5 @@ jobs:
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
-        files: ./coverage.txt,zap/coverage.txt,zerolog/coverage.txt
+        with:
+          files: ./coverage.txt,zap/coverage.txt,zerolog/coverage.txt
