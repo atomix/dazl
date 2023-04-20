@@ -19,13 +19,6 @@ interface and configuration format for existing logging frameworks like [zap](ht
 [zerolog](https://github.com/rs/zerolog), using an approach that's been proven in other languages, such as Java's
 [slf4j](https://slf4j.org) logging facade.
 
-### A brief history
-
-This framework was originally developed at the [Open Networking Foundation](https://opennetworking.org) and is still
-used extensively in open source cloud software projects at [Intel](https://www.intel.com), providing users and
-operators the ability to easily configure logging for specific systems and subsystems, control logging targets and
-formats, and enable rapid debugging and analysis without the need to modify code.
-
 # User Guide
 
 * [Use cases](#use-cases)
