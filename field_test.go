@@ -5,8 +5,10 @@
 package dazl
 
 import (
+	"errors"
 	"github.com/stretchr/testify/assert"
 	"testing"
+	"time"
 )
 
 type testWriter struct {
@@ -50,6 +52,46 @@ func TestBoolField(t *testing.T) {
 	_, err = Bool("foo", true)(&testStringWriter{testWriter: writer, Value: "true"})
 	assert.NoError(t, err)
 	_, err = Bool("foo", true)(writer)
+	assert.Error(t, err)
+}
+
+type testTimeWriter struct {
+	testWriter
+}
+
+func (w *testTimeWriter) WithTimeField(name string, value time.Time) Writer {
+	assert.Equal(w.T, "foo", name)
+	assert.Equal(w.T, time.Unix(0, 0), value)
+	return w
+}
+
+func TestTimeField(t *testing.T) {
+	writer := testWriter{T: t}
+	_, err := Time("foo", time.Unix(0, 0))(&testTimeWriter{writer})
+	assert.NoError(t, err)
+	_, err = Time("foo", time.Unix(0, 0))(&testStringWriter{testWriter: writer, Value: time.Unix(0, 0).String()})
+	assert.NoError(t, err)
+	_, err = Time("foo", time.Unix(0, 0))(writer)
+	assert.Error(t, err)
+}
+
+type testDurationWriter struct {
+	testWriter
+}
+
+func (w *testDurationWriter) WithDurationField(name string, value time.Duration) Writer {
+	assert.Equal(w.T, "foo", name)
+	assert.Equal(w.T, time.Second, value)
+	return w
+}
+
+func TestDurationField(t *testing.T) {
+	writer := testWriter{T: t}
+	_, err := Duration("foo", time.Second)(&testDurationWriter{writer})
+	assert.NoError(t, err)
+	_, err = Duration("foo", time.Second)(&testStringWriter{testWriter: writer, Value: "1s"})
+	assert.NoError(t, err)
+	_, err = Duration("foo", time.Second)(writer)
 	assert.Error(t, err)
 }
 
@@ -170,6 +212,86 @@ func TestUint64Field(t *testing.T) {
 	_, err = Uint64("foo", 1)(&testStringWriter{testWriter: writer, Value: "1"})
 	assert.NoError(t, err)
 	_, err = Uint64("foo", 1)(writer)
+	assert.Error(t, err)
+}
+
+type testFloat32Writer struct {
+	testWriter
+}
+
+func (w *testFloat32Writer) WithFloat32Field(name string, value float32) Writer {
+	assert.Equal(w.T, "foo", name)
+	assert.Equal(w.T, float32(1), value)
+	return w
+}
+
+func TestFloat32Field(t *testing.T) {
+	writer := testWriter{T: t}
+	_, err := Float32("foo", 1)(&testFloat32Writer{writer})
+	assert.NoError(t, err)
+	_, err = Float32("foo", 1)(&testStringWriter{testWriter: writer, Value: "1"})
+	assert.NoError(t, err)
+	_, err = Float32("foo", 1)(writer)
+	assert.Error(t, err)
+}
+
+type testFloat64Writer struct {
+	testWriter
+}
+
+func (w *testFloat64Writer) WithFloat64Field(name string, value float64) Writer {
+	assert.Equal(w.T, "foo", name)
+	assert.Equal(w.T, float64(1), value)
+	return w
+}
+
+func TestFloat64Field(t *testing.T) {
+	writer := testWriter{T: t}
+	_, err := Float64("foo", 1)(&testFloat64Writer{writer})
+	assert.NoError(t, err)
+	_, err = Float64("foo", 1)(&testStringWriter{testWriter: writer, Value: "1"})
+	assert.NoError(t, err)
+	_, err = Float64("foo", 1)(writer)
+	assert.Error(t, err)
+}
+
+type testTimeSliceWriter struct {
+	testWriter
+}
+
+func (w *testTimeSliceWriter) WithTimeSliceField(name string, value []time.Time) Writer {
+	assert.Equal(w.T, "foo", name)
+	assert.Equal(w.T, []time.Time{time.Unix(0, 0)}, value)
+	return w
+}
+
+func TestTimeSliceField(t *testing.T) {
+	writer := testWriter{T: t}
+	_, err := Times("foo", []time.Time{time.Unix(0, 0)})(&testTimeSliceWriter{writer})
+	assert.NoError(t, err)
+	_, err = Times("foo", []time.Time{time.Unix(0, 0)})(&testStringWriter{testWriter: writer, Value: "[" + time.Unix(0, 0).String() + "]"})
+	assert.NoError(t, err)
+	_, err = Times("foo", []time.Time{time.Unix(0, 0)})(writer)
+	assert.Error(t, err)
+}
+
+type testDurationSliceWriter struct {
+	testWriter
+}
+
+func (w *testDurationSliceWriter) WithDurationSliceField(name string, value []time.Duration) Writer {
+	assert.Equal(w.T, "foo", name)
+	assert.Equal(w.T, []time.Duration{time.Second}, value)
+	return w
+}
+
+func TestDurationSliceField(t *testing.T) {
+	writer := testWriter{T: t}
+	_, err := Durations("foo", []time.Duration{time.Second})(&testDurationSliceWriter{writer})
+	assert.NoError(t, err)
+	_, err = Durations("foo", []time.Duration{time.Second})(&testStringWriter{testWriter: writer, Value: "[1s]"})
+	assert.NoError(t, err)
+	_, err = Durations("foo", []time.Duration{time.Second})(writer)
 	assert.Error(t, err)
 }
 
@@ -310,5 +432,85 @@ func TestUint64SliceField(t *testing.T) {
 	_, err = Uint64s("foo", []uint64{1})(&testStringWriter{testWriter: writer, Value: "[1]"})
 	assert.NoError(t, err)
 	_, err = Uint64s("foo", []uint64{1})(writer)
+	assert.Error(t, err)
+}
+
+type testFloat32SliceWriter struct {
+	testWriter
+}
+
+func (w *testFloat32SliceWriter) WithFloat32SliceField(name string, value []float32) Writer {
+	assert.Equal(w.T, "foo", name)
+	assert.Equal(w.T, []float32{1}, value)
+	return w
+}
+
+func TestFloat32SliceField(t *testing.T) {
+	writer := testWriter{T: t}
+	_, err := Float32s("foo", []float32{1})(&testFloat32SliceWriter{writer})
+	assert.NoError(t, err)
+	_, err = Float32s("foo", []float32{1})(&testStringWriter{testWriter: writer, Value: "[1]"})
+	assert.NoError(t, err)
+	_, err = Float32s("foo", []float32{1})(writer)
+	assert.Error(t, err)
+}
+
+type testFloat64SliceWriter struct {
+	testWriter
+}
+
+func (w *testFloat64SliceWriter) WithFloat64SliceField(name string, value []float64) Writer {
+	assert.Equal(w.T, "foo", name)
+	assert.Equal(w.T, []float64{1}, value)
+	return w
+}
+
+func TestFloat64SliceField(t *testing.T) {
+	writer := testWriter{T: t}
+	_, err := Float64s("foo", []float64{1})(&testFloat64SliceWriter{writer})
+	assert.NoError(t, err)
+	_, err = Float64s("foo", []float64{1})(&testStringWriter{testWriter: writer, Value: "[1]"})
+	assert.NoError(t, err)
+	_, err = Float64s("foo", []float64{1})(writer)
+	assert.Error(t, err)
+}
+
+type testStringSliceWriter struct {
+	testWriter
+}
+
+func (w *testStringSliceWriter) WithStringSliceField(name string, value []string) Writer {
+	assert.Equal(w.T, "foo", name)
+	assert.Equal(w.T, []string{"test"}, value)
+	return w
+}
+
+func TestStringSliceField(t *testing.T) {
+	writer := testWriter{T: t}
+	_, err := Strings("foo", []string{"test"})(&testStringSliceWriter{writer})
+	assert.NoError(t, err)
+	_, err = Strings("foo", []string{"test"})(&testStringWriter{testWriter: writer, Value: "[test]"})
+	assert.NoError(t, err)
+	_, err = Strings("foo", []string{"test"})(writer)
+	assert.Error(t, err)
+}
+
+type testErrorWriter struct {
+	testWriter
+}
+
+func (w *testErrorWriter) WithErrorField(name string, value error) Writer {
+	assert.Equal(w.T, "foo", name)
+	assert.Equal(w.T, errors.New("test"), value)
+	return w
+}
+
+func TestErrorField(t *testing.T) {
+	writer := testWriter{T: t}
+	_, err := Error("foo", errors.New("test"))(&testErrorWriter{writer})
+	assert.NoError(t, err)
+	_, err = Error("foo", errors.New("test"))(&testStringWriter{testWriter: writer, Value: "test"})
+	assert.NoError(t, err)
+	_, err = Error("foo", errors.New("test"))(writer)
 	assert.Error(t, err)
 }

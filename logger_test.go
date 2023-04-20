@@ -279,6 +279,82 @@ func TestLogger(t *testing.T) {
 	log.Warn("warn")
 }
 
+const testMethodsConfig = `
+encoders:
+  json:
+    fields:
+      - name:
+          key: logger
+      - message
+      - level:
+          format: lowercase
+
+writers:
+  stdout:
+    encoder: json
+
+rootLogger:
+  level: debug
+  outputs:
+    - stdout
+`
+
+func TestLoggerMethods(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	json := NewMockEncoder(ctrl)
+
+	stdout := NewMockWriter(ctrl)
+	stdout.EXPECT().WithSkipCalls(gomock.Eq(2)).Return(stdout)
+
+	json.EXPECT().NewWriter(gomock.Any()).Return(stdout, nil)
+
+	json.EXPECT().WithNameEnabled().Return(json, nil)
+	json.EXPECT().WithNameKey(gomock.Eq("logger")).Return(json, nil)
+	json.EXPECT().WithLevelEnabled().Return(json, nil)
+	json.EXPECT().WithLevelFormat(gomock.Eq(LowerCaseLevelFormat)).Return(json, nil)
+
+	framework := &testFramework{
+		json: json,
+	}
+
+	var config loggingConfig
+	assert.NoError(t, yaml.Unmarshal([]byte(testMethodsConfig), &config))
+	assert.NoError(t, configure(framework, config))
+
+	stdout.EXPECT().WithName(gomock.Eq("test")).Return(stdout)
+	log := GetLogger("test")
+
+	stdout.EXPECT().Debug(gomock.Eq("debug"))
+	log.Debug("debug")
+	stdout.EXPECT().Debug(gomock.Eq("debug"))
+	log.Debugf("debug")
+	stdout.EXPECT().Debug(gomock.Eq("debug"))
+	log.Debugw("debug")
+
+	stdout.EXPECT().Info(gomock.Eq("info"))
+	log.Info("info")
+	stdout.EXPECT().Info(gomock.Eq("info"))
+	log.Infof("info")
+	stdout.EXPECT().Info(gomock.Eq("info"))
+	log.Infow("info")
+
+	stdout.EXPECT().Warn(gomock.Eq("warn"))
+	log.Warn("warn")
+	stdout.EXPECT().Warn(gomock.Eq("warn"))
+	log.Warnf("warn")
+	stdout.EXPECT().Warn(gomock.Eq("warn"))
+	log.Warnw("warn")
+
+	stdout.EXPECT().Error(gomock.Eq("error"))
+	log.Error("error")
+	stdout.EXPECT().Error(gomock.Eq("error"))
+	log.Errorf("error")
+	stdout.EXPECT().Error(gomock.Eq("error"))
+	log.Errorw("error")
+}
+
 type testFramework struct {
 	console Encoder
 	json    Encoder
