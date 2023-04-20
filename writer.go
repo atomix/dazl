@@ -13,16 +13,13 @@ import (
 // Writer is a dazl writer
 type Writer interface {
 	WithName(name string) Writer
+	WithSkipCalls(calls int) Writer
 	Debug(msg string)
 	Info(msg string)
 	Error(msg string)
 	Fatal(msg string)
 	Panic(msg string)
 	Warn(msg string)
-}
-
-type CallSkippingWriter interface {
-	WithSkipCalls(calls int) Writer
 }
 
 type BasicSamplingWriter interface {

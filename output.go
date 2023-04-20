@@ -68,10 +68,6 @@ type dazlOutput struct {
 	sampler Sampler
 }
 
-func (o *dazlOutput) Writer() Writer {
-	return o.writer
-}
-
 func (o *dazlOutput) WithWriter(writer Writer) *dazlOutput {
 	return &dazlOutput{
 		writer:  writer,

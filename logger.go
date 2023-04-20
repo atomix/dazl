@@ -192,7 +192,7 @@ func newLogger(context *loggingContext, parent *dazlLogger, name string) (*dazlL
 
 		// Configure sampling for the output
 		if outputConfig.Sample.Basic != nil {
-			if samplingWriter, ok := output.Writer().(BasicSamplingWriter); ok {
+			if samplingWriter, ok := output.writer.(BasicSamplingWriter); ok {
 				writer, err := samplingWriter.WithBasicSampler(
 					outputConfig.Sample.Basic.Interval,
 					outputConfig.Sample.Basic.MaxLevel.Level())
@@ -207,7 +207,7 @@ func newLogger(context *loggingContext, parent *dazlLogger, name string) (*dazlL
 				})
 			}
 		} else if outputConfig.Sample.Random != nil {
-			if samplingWriter, ok := output.Writer().(RandomSamplingWriter); ok {
+			if samplingWriter, ok := output.writer.(RandomSamplingWriter); ok {
 				writer, err := samplingWriter.WithRandomSampler(outputConfig.Sample.Random.Interval, outputConfig.Sample.Random.MaxLevel.Level())
 				if err != nil {
 					return nil, err
@@ -270,13 +270,13 @@ func (c *loggingContext) getWriter(name string) (Writer, error) {
 		return writer.(Writer), nil
 	}
 
-	writer, err := c.newWriter(name)
+	newWriter, err := c.newWriter(name)
 	if err != nil {
 		return nil, err
 	}
-
-	c.writers.Store(name, writer)
-	return writer.(Writer), nil
+	newWriter = newWriter.WithSkipCalls(2)
+	c.writers.Store(name, newWriter)
+	return newWriter, nil
 }
 
 func (c *loggingContext) newWriter(name string) (Writer, error) {
@@ -403,7 +403,7 @@ func (l *dazlLogger) getChild(name string) (*dazlLogger, error) {
 func (l *dazlLogger) WithFields(fields ...Field) Logger {
 	outputs := make(map[string]*dazlOutput)
 	for name, output := range l.outputs {
-		writer := output.Writer()
+		writer := output.writer
 		var err error
 		for _, field := range fields {
 			if writer, err = field(writer); err != nil {
@@ -421,11 +421,7 @@ func (l *dazlLogger) WithFields(fields ...Field) Logger {
 func (l *dazlLogger) WithSkipCalls(calls int) Logger {
 	outputs := make(map[string]*dazlOutput)
 	for name, output := range l.outputs {
-		if writer, ok := output.Writer().(CallSkippingWriter); ok {
-			outputs[name] = output.WithWriter(writer.WithSkipCalls(calls))
-		} else {
-			outputs[name] = output
-		}
+		outputs[name] = output.WithWriter(output.writer.WithSkipCalls(calls))
 	}
 	return &dazlLogger{
 		loggerContext: l.loggerContext,
