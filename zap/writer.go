@@ -14,7 +14,7 @@ import (
 
 func newWriter(writer io.Writer, encoder zapcore.Encoder, config zap.Config) (dazl.Writer, error) {
 	logger, err := config.Build(
-		zap.AddCallerSkip(3),
+		zap.AddCallerSkip(1),
 		zap.WrapCore(func(zapcore.Core) zapcore.Core {
 			return zapcore.NewCore(encoder, &writeSyncer{writer}, zap.DebugLevel)
 		}))
@@ -45,13 +45,6 @@ func (w *Writer) withField(field zap.Field) dazl.Writer {
 	return &Writer{
 		root:   w.root,
 		logger: w.logger.With(field),
-	}
-}
-
-func (w *Writer) withOptions(options ...zap.Option) dazl.Writer {
-	return &Writer{
-		root:   w.root,
-		logger: w.logger.WithOptions(options...),
 	}
 }
 
@@ -208,7 +201,10 @@ func (w *Writer) WithDurationSliceField(name string, values []time.Duration) daz
 }
 
 func (w *Writer) WithSkipCalls(calls int) dazl.Writer {
-	return w.withOptions(zap.AddCallerSkip(calls))
+	return &Writer{
+		root:   w.root.WithOptions(zap.AddCallerSkip(calls)),
+		logger: w.logger.WithOptions(zap.AddCallerSkip(calls)),
+	}
 }
 
 func (w *Writer) Debug(msg string) {

@@ -32,7 +32,7 @@ func (e *zapEncoder) WithNameEnabled() (dazl.Encoder, error) {
 func (e *zapEncoder) WithLevelEnabled() (dazl.Encoder, error) {
 	return e.with(func(config *zapcore.EncoderConfig) {
 		config.LevelKey = "level"
-		config.EncodeLevel = zapcore.CapitalLevelEncoder
+		config.EncodeLevel = zapcore.LowercaseLevelEncoder
 	}), nil
 }
 
