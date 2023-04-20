@@ -174,10 +174,8 @@ func TestLogger(t *testing.T) {
 	assert.NoError(t, yaml.Unmarshal([]byte(testConfig), &config))
 	assert.NoError(t, configure(framework, config))
 
-	var log = root
-
 	stdout.EXPECT().WithName(gomock.Eq("test")).Return(stdout)
-	log = GetLogger("test")
+	log := GetLogger("test")
 
 	log.Debug("debug")
 	stdout.EXPECT().Info(gomock.Eq("info"))
