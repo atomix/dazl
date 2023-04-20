@@ -18,7 +18,7 @@ func TestLoggerNames(t *testing.T) {
 	assert.Equal(t, "github.com/atomix/dazl", GetPackageLogger().Name())
 }
 
-const testLoggerConfig = `
+const testLoggerConfigArray = `
 level: debug
 sample:
   random:
@@ -32,18 +32,40 @@ outputs:
   - file
 `
 
-func TestLoggerConfig(t *testing.T) {
+func TestLoggerConfigArray(t *testing.T) {
 	var config loggerConfig
-	assert.NoError(t, yaml.Unmarshal([]byte(testLoggerConfig), &config))
+	assert.NoError(t, yaml.Unmarshal([]byte(testLoggerConfigArray), &config))
 
 	assert.Equal(t, DebugLevel, config.Level.Level())
-	assert.Len(t, config.Outputs, 3)
-	assert.Equal(t, "stdout", config.Outputs[0].Writer)
-	assert.Equal(t, InfoLevel, config.Outputs[0].Level.Level())
-	assert.Equal(t, "stderr", config.Outputs[1].Writer)
-	assert.Equal(t, ErrorLevel, config.Outputs[1].Level.Level())
-	assert.Equal(t, "file", config.Outputs[2].Writer)
-	assert.Equal(t, EmptyLevel, config.Outputs[2].Level.Level())
+	assert.Len(t, config.Outputs.Outputs, 3)
+	assert.Equal(t, InfoLevel, config.Outputs.Outputs["stdout"].Level.Level())
+	assert.Equal(t, ErrorLevel, config.Outputs.Outputs["stderr"].Level.Level())
+	assert.Equal(t, EmptyLevel, config.Outputs.Outputs["file"].Level.Level())
+}
+
+const testLoggerConfigObject = `
+level: debug
+sample:
+  random:
+    interval: 10
+    level: debug
+outputs:
+  stdout:
+    level: info
+  stderr:
+    level: error
+  file:
+`
+
+func TestLoggerConfigObject(t *testing.T) {
+	var config loggerConfig
+	assert.NoError(t, yaml.Unmarshal([]byte(testLoggerConfigObject), &config))
+
+	assert.Equal(t, DebugLevel, config.Level.Level())
+	assert.Len(t, config.Outputs.Outputs, 3)
+	assert.Equal(t, InfoLevel, config.Outputs.Outputs["stdout"].Level.Level())
+	assert.Equal(t, ErrorLevel, config.Outputs.Outputs["stderr"].Level.Level())
+	assert.Equal(t, EmptyLevel, config.Outputs.Outputs["file"].Level.Level())
 }
 
 const testConfig = `
@@ -99,15 +121,15 @@ loggers:
       - file
   test/outputs/level:
     outputs:
-      - stdout:
-          level: warn
+      stdout:
+        level: warn
   test/outputs/sample:
     outputs:
-      - stdout:
-          sample:
-            basic:
-              interval: 2
-              maxLevel: warn
+      stdout:
+        sample:
+          basic:
+            interval: 2
+            maxLevel: warn
 `
 
 func TestLogger(t *testing.T) {

@@ -9,6 +9,30 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+type outputsConfig struct {
+	Outputs map[string]outputSchema
+}
+
+func (c *outputsConfig) UnmarshalYAML(unmarshal func(any) error) error {
+	config := make(map[string]outputSchema)
+	if err := unmarshal(&config); err != nil {
+		var config []outputConfig
+		if err := unmarshal(&config); err != nil {
+			return err
+		}
+		c.Outputs = make(map[string]outputSchema)
+		for _, output := range config {
+			c.Outputs[output.Writer] = outputSchema{
+				Level:  output.Level,
+				Sample: output.Sample,
+			}
+		}
+		return nil
+	}
+	c.Outputs = config
+	return nil
+}
+
 type outputConfig struct {
 	Writer string         `json:"writer" yaml:"writer"`
 	Level  levelConfig    `json:"level" yaml:"level"`

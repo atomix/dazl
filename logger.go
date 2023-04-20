@@ -169,12 +169,12 @@ func newLogger(context *loggingContext, parent *dazlLogger, name string) (*dazlL
 		}
 	}
 
-	for _, outputConfig := range config.Outputs {
+	for writerName, outputConfig := range config.Outputs.Outputs {
 		// If the configured output already exists, override the output configuration.
 		// Otherwise, create a new output.
-		output, ok := logger.outputs[outputConfig.Writer]
+		output, ok := logger.outputs[writerName]
 		if !ok {
-			writer, err := context.getWriter(outputConfig.Writer)
+			writer, err := context.getWriter(writerName)
 			if err != nil {
 				return nil, err
 			}
@@ -220,7 +220,7 @@ func newLogger(context *loggingContext, parent *dazlLogger, name string) (*dazlL
 				})
 			}
 		}
-		logger.outputs[outputConfig.Writer] = output
+		logger.outputs[writerName] = output
 	}
 	return logger, nil
 }
@@ -554,5 +554,5 @@ var _ Logger = &dazlLogger{}
 type loggerConfig struct {
 	Level   levelConfig    `json:"level" yaml:"level"`
 	Sample  samplingConfig `json:"sample" yaml:"sample"`
-	Outputs []outputConfig `json:"outputs" yaml:"outputs"`
+	Outputs outputsConfig  `json:"outputs" yaml:"outputs"`
 }
