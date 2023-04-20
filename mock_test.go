@@ -366,3 +366,17 @@ func (mr *MockWriterMockRecorder) WithName(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WithName", reflect.TypeOf((*MockWriter)(nil).WithName), arg0)
 }
+
+// WithSkipCalls mocks base method.
+func (m *MockWriter) WithSkipCalls(arg0 int) Writer {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WithSkipCalls", arg0)
+	ret0, _ := ret[0].(Writer)
+	return ret0
+}
+
+// WithSkipCalls indicates an expected call of WithSkipCalls.
+func (mr *MockWriterMockRecorder) WithSkipCalls(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WithSkipCalls", reflect.TypeOf((*MockWriter)(nil).WithSkipCalls), arg0)
+}

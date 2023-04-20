@@ -118,7 +118,9 @@ func TestLogger(t *testing.T) {
 	json := NewMockEncoder(ctrl)
 
 	stdout := NewMockWriter(ctrl)
+	stdout.EXPECT().WithSkipCalls(gomock.Eq(2)).Return(stdout)
 	file := NewMockWriter(ctrl)
+	file.EXPECT().WithSkipCalls(gomock.Eq(2)).Return(file)
 
 	console.EXPECT().NewWriter(gomock.Any()).Return(stdout, nil)
 	json.EXPECT().NewWriter(gomock.Any()).Return(file, nil)
