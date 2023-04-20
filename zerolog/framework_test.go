@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-package zap
+package zerolog
 
 import (
 	"bytes"
@@ -18,7 +18,7 @@ func TestJSONEncoder(t *testing.T) {
 	writer, err := encoder.NewWriter(buf)
 	assert.NoError(t, err)
 	writer.Info("Hello world!")
-	assert.Equal(t, "{\"message\":\"Hello world!\"}\n", buf.String())
+	assert.Equal(t, "{\"level\":\"info\",\"message\":\"Hello world!\"}\n", buf.String())
 	buf.Reset()
 
 	encoder, err = encoder.(dazl.MessageKeyEncoder).WithMessageKey("msg")
@@ -26,7 +26,7 @@ func TestJSONEncoder(t *testing.T) {
 	writer, err = encoder.NewWriter(buf)
 	assert.NoError(t, err)
 	writer.Info("Hello world!")
-	assert.Equal(t, "{\"msg\":\"Hello world!\"}\n", buf.String())
+	assert.Equal(t, "{\"level\":\"info\",\"msg\":\"Hello world!\"}\n", buf.String())
 	buf.Reset()
 
 	encoder, err = encoder.(dazl.NameEncoder).WithNameEnabled()
@@ -34,12 +34,12 @@ func TestJSONEncoder(t *testing.T) {
 	writer, err = encoder.NewWriter(buf)
 	assert.NoError(t, err)
 	writer.Info("Hello world!")
-	assert.Equal(t, "{\"msg\":\"Hello world!\"}\n", buf.String())
+	assert.Equal(t, "{\"level\":\"info\",\"msg\":\"Hello world!\"}\n", buf.String())
 	buf.Reset()
 
 	writer = writer.WithName("test")
 	writer.Info("Hello world!")
-	assert.Equal(t, "{\"logger\":\"test\",\"msg\":\"Hello world!\"}\n", buf.String())
+	assert.Equal(t, "{\"level\":\"info\",\"logger\":\"test\",\"msg\":\"Hello world!\"}\n", buf.String())
 	buf.Reset()
 
 	encoder, err = encoder.(dazl.NameKeyEncoder).WithNameKey("name")
@@ -48,7 +48,7 @@ func TestJSONEncoder(t *testing.T) {
 	assert.NoError(t, err)
 	writer = writer.WithName("test")
 	writer.Info("Hello world!")
-	assert.Equal(t, "{\"name\":\"test\",\"msg\":\"Hello world!\"}\n", buf.String())
+	assert.Equal(t, "{\"level\":\"info\",\"name\":\"test\",\"msg\":\"Hello world!\"}\n", buf.String())
 	buf.Reset()
 
 	encoder, err = encoder.(dazl.LevelEncoder).WithLevelEnabled()
@@ -80,7 +80,7 @@ func TestJSONEncoder(t *testing.T) {
 	writer, err = encoder.NewWriter(buf)
 	assert.NoError(t, err)
 	writer.Info("Hello world!")
-	assert.Equal(t, "{\"lvl\":\"INFO\",\"caller\":\"zap/framework_test.go:82\",\"msg\":\"Hello world!\"}\n", buf.String())
+	assert.Equal(t, "{\"lvl\":\"INFO\",\"msg\":\"Hello world!\"}\n", buf.String())
 	buf.Reset()
 
 	encoder, err = encoder.(dazl.CallerKeyEncoder).WithCallerKey("call")
@@ -88,7 +88,7 @@ func TestJSONEncoder(t *testing.T) {
 	writer, err = encoder.NewWriter(buf)
 	assert.NoError(t, err)
 	writer.Info("Hello world!")
-	assert.Equal(t, "{\"lvl\":\"INFO\",\"call\":\"zap/framework_test.go:90\",\"msg\":\"Hello world!\"}\n", buf.String())
+	assert.Equal(t, "{\"lvl\":\"INFO\",\"call\":\"framework_test.go:90\",\"msg\":\"Hello world!\"}\n", buf.String())
 	buf.Reset()
 }
 
@@ -99,7 +99,7 @@ func TestConsoleEncoder(t *testing.T) {
 	writer, err := encoder.NewWriter(buf)
 	assert.NoError(t, err)
 	writer.Info("Hello world!")
-	assert.Equal(t, "Hello world!\n", buf.String())
+	assert.Equal(t, "\x1b[32mINF\x1b[0m Hello world!\n", buf.String())
 	buf.Reset()
 
 	encoder, err = encoder.(dazl.NameEncoder).WithNameEnabled()
@@ -107,12 +107,12 @@ func TestConsoleEncoder(t *testing.T) {
 	writer, err = encoder.NewWriter(buf)
 	assert.NoError(t, err)
 	writer.Info("Hello world!")
-	assert.Equal(t, "Hello world!\n", buf.String())
+	assert.Equal(t, "\x1b[32mINF\x1b[0m Hello world!\n", buf.String())
 	buf.Reset()
 
 	writer = writer.WithName("test")
 	writer.Info("Hello world!")
-	assert.Equal(t, "test\tHello world!\n", buf.String())
+	assert.Equal(t, "\x1b[32mINF\x1b[0m Hello world! \x1b[36mlogger=\x1b[0mtest\n", buf.String())
 	buf.Reset()
 
 	encoder, err = encoder.(dazl.LevelEncoder).WithLevelEnabled()
@@ -120,7 +120,7 @@ func TestConsoleEncoder(t *testing.T) {
 	writer, err = encoder.NewWriter(buf)
 	assert.NoError(t, err)
 	writer.Info("Hello world!")
-	assert.Equal(t, "info\tHello world!\n", buf.String())
+	assert.Equal(t, "info Hello world!\n", buf.String())
 	buf.Reset()
 
 	encoder, err = encoder.(dazl.LevelFormattingEncoder).WithLevelFormat(dazl.UpperCaseLevelFormat)
@@ -128,7 +128,7 @@ func TestConsoleEncoder(t *testing.T) {
 	writer, err = encoder.NewWriter(buf)
 	assert.NoError(t, err)
 	writer.Info("Hello world!")
-	assert.Equal(t, "INFO\tHello world!\n", buf.String())
+	assert.Equal(t, "INFO Hello world!\n", buf.String())
 	buf.Reset()
 
 	encoder, err = encoder.(dazl.CallerEncoder).WithCallerEnabled()
@@ -136,6 +136,6 @@ func TestConsoleEncoder(t *testing.T) {
 	writer, err = encoder.NewWriter(buf)
 	assert.NoError(t, err)
 	writer.Info("Hello world!")
-	assert.Equal(t, "INFO\tzap/framework_test.go:138\tHello world!\n", buf.String())
+	assert.Equal(t, "INFO \x1b[1mframework_test.go:138\x1b[0m\x1b[36m >\x1b[0m Hello world!\n", buf.String())
 	buf.Reset()
 }

@@ -10,17 +10,12 @@ import (
 	"time"
 )
 
-func newWriter(logger zerolog.Logger) (dazl.Writer, error) {
-	return &Writer{
-		logger: logger,
-	}, nil
-}
-
 // Writer is a dazl output implementation
 type Writer struct {
-	logger  zerolog.Logger
-	nameKey string
-	name    string
+	logger     zerolog.Logger
+	nameKey    string
+	name       string
+	skipFrames int
 }
 
 func (w *Writer) Debug(msg string) {
@@ -67,6 +62,15 @@ func (w *Writer) WithName(name string) dazl.Writer {
 		logger:  w.logger,
 		nameKey: name,
 		name:    name,
+	}
+}
+
+func (w *Writer) WithSkipCalls(calls int) dazl.Writer {
+	return &Writer{
+		logger:     w.logger.With().CallerWithSkipFrameCount(w.skipFrames + calls).Logger(),
+		nameKey:    w.nameKey,
+		name:       w.name,
+		skipFrames: w.skipFrames + calls,
 	}
 }
 
@@ -172,10 +176,6 @@ func (w *Writer) WithTimeSliceField(name string, values []time.Time) dazl.Writer
 
 func (w *Writer) WithDurationSliceField(name string, values []time.Duration) dazl.Writer {
 	return w.withLogger(w.logger.With().Durs(name, values).Logger())
-}
-
-func (w *Writer) WithSkipCalls(calls int) dazl.Writer {
-	return w.withLogger(w.logger.With().CallerWithSkipFrameCount(calls).Logger())
 }
 
 var _ dazl.Writer = (*Writer)(nil)

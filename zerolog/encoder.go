@@ -26,19 +26,23 @@ type consoleEncoder struct {
 func (e *consoleEncoder) NewWriter(out io.Writer) (dazl.Writer, error) {
 	writer := e.writer
 	writer.Out = out
-	logger := zerolog.New(writer)
-	if e.timestamp {
-		logger = logger.With().Timestamp().Logger()
+	if !e.timestamp {
+		writer.FormatTimestamp = func(i interface{}) string {
+			return ""
+		}
 	}
+	logger := zerolog.New(writer)
+	logger = logger.With().Timestamp().Logger()
 	if e.caller {
-		logger = logger.With().CallerWithSkipFrameCount(5).Logger()
+		logger = logger.With().CallerWithSkipFrameCount(3).Logger()
 	}
 	if e.stacktrace {
 		logger = logger.With().Stack().Logger()
 	}
 	return &Writer{
-		logger:  logger,
-		nameKey: e.nameKey,
+		logger:     logger,
+		nameKey:    e.nameKey,
+		skipFrames: 3,
 	}, nil
 }
 
@@ -55,7 +59,7 @@ func (e *consoleEncoder) WithNameKey(key string) (dazl.Encoder, error) {
 }
 
 func (e *consoleEncoder) WithLevelEnabled() (dazl.Encoder, error) {
-	return e, nil
+	return e.WithLevelFormat(dazl.LowerCaseLevelFormat)
 }
 
 func (e *consoleEncoder) WithLevelFormat(format dazl.LevelFormat) (dazl.Encoder, error) {
@@ -115,7 +119,7 @@ func (e *jsonEncoder) NewWriter(writer io.Writer) (dazl.Writer, error) {
 		logger = logger.With().Timestamp().Logger()
 	}
 	if e.caller {
-		logger = logger.With().CallerWithSkipFrameCount(5).Logger()
+		logger = logger.With().CallerWithSkipFrameCount(3).Logger()
 	}
 	if e.stacktrace {
 		logger = logger.With().Stack().Logger()
@@ -197,7 +201,7 @@ func (e *jsonEncoder) WithTimestampFormat(format dazl.TimestampFormat) (dazl.Enc
 }
 
 func (e *jsonEncoder) WithCallerEnabled() (dazl.Encoder, error) {
-	return e, nil
+	return e.WithCallerFormat(dazl.ShortCallerFormat)
 }
 
 func (e *jsonEncoder) WithCallerKey(key string) (dazl.Encoder, error) {
@@ -213,6 +217,9 @@ func (e *jsonEncoder) WithCallerFormat(format dazl.CallerFormat) (dazl.Encoder, 
 			return filepath.Base(file) + ":" + strconv.Itoa(line)
 		}
 	case dazl.FullCallerFormat:
+		zerolog.CallerMarshalFunc = func(pc uintptr, file string, line int) string {
+			return file + ":" + strconv.Itoa(line)
+		}
 	default:
 		return nil, fmt.Errorf("unsupoorted caller format %s", format)
 	}
