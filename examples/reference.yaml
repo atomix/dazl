@@ -102,25 +102,29 @@ rootLogger:
   # are logged by the logger.
   #   - 'basic' configures the basic sampler
   #     - 'interval' configures the sampler to write every n messages to the output
-  #     - 'minLevel' is the minimum level at which messages will be sampled
+  #     - 'maxLevel' is the maximum level at which messages will be sampled
   #   - 'random' configures the random sampler
   #     - 'interval' configures the average frequency of samples where sampling will occur at a mean
   #       rate of 1/interval
-  #     - 'minLevel' is the minimum level at which messages will be sampled
+  #     - 'maxLevel' is the maximum level at which messages will be sampled
   sample: random
   # 'outputs' is a list of outputs to which to write the logs.
   # Each item of the list is either the name of the writer to which to output the logs
   # or the writer and its configuration for this particular output.
   outputs:
     - stdout:
+        # 'level' configures the minimum level to write to this output.
+        # Messages logged at this or any higher severity level will be written to this output.
         level: info
         # 'sample' is the sampling configuration for this output. By defaut, all messages
         # are logged to the output.
-        #   - 'counting' configures the counting sampler
-        #     - 'count' configures the sampler to write every n messages to the output
-        #     - 'level' is the level at/above which messages will be sampled
+        #   - 'basic' configures the basic sampler
+        #     - 'interval' configures the sampler to write every n messages to the output
+        #     - 'maxLevel' is the maximum level at which messages will be sampled
         #   - 'random' configures the random sampler
-        #     - 'level' is the level at/above which messages will be sampled
+        #     - 'interval' configures the average frequency of samples where sampling will occur at a mean
+        #       rate of 1/interval
+        #     - 'maxLevel' is the maximum level at which messages will be sampled
         sample:
           basic:
             interval: 10
@@ -128,10 +132,24 @@ rootLogger:
     - file
 
 # 'loggers' is a mapping of logger paths to their configuration.
-# All loggers inherit their default configuration from the 'rootLogger'.
+# Each key is the name of the logger to configured. All loggers inherit their default
+# configuration from the 'rootLogger', and each logger inherits the configuration from
+# all ancestors according to the path prefix.
 loggers:
   github.com/atomix/dazl:
+    # 'level' configures the minimum level to write to configured outputs.
+    # Messages logged at this or any higher severity level will be written to all outputs
+    # either configured or inherited by this logger.
     level: info
+    # 'sample' is the sampling configuration for this output. By defaut, all messages
+    # are logged to the output.
+    #   - 'basic' configures the basic sampler
+    #     - 'interval' configures the sampler to write every n messages to the output
+    #     - 'maxLevel' is the maximum level at which messages will be sampled
+    #   - 'random' configures the random sampler
+    #     - 'interval' configures the average frequency of samples where sampling will occur at a mean
+    #       rate of 1/interval
+    #     - 'maxLevel' is the maximum level at which messages will be sampled
     sample:
       basic:
         interval: 10
