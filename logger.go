@@ -61,28 +61,28 @@ type Logger interface {
 	// WithSkipCalls skipsthe given number of calls to the logger methods
 	WithSkipCalls(calls int) Logger
 
-	Debug(...interface{})
-	Debugf(format string, args ...interface{})
+	Debug(...any)
+	Debugf(format string, args ...any)
 	Debugw(msg string, fields ...Field)
 
-	Info(...interface{})
-	Infof(format string, args ...interface{})
+	Info(...any)
+	Infof(format string, args ...any)
 	Infow(msg string, fields ...Field)
 
-	Warn(...interface{})
-	Warnf(format string, args ...interface{})
+	Warn(...any)
+	Warnf(format string, args ...any)
 	Warnw(msg string, fields ...Field)
 
-	Error(...interface{})
-	Errorf(format string, args ...interface{})
+	Error(...any)
+	Errorf(format string, args ...any)
 	Errorw(msg string, fields ...Field)
 
-	Fatal(...interface{})
-	Fatalf(format string, args ...interface{})
+	Fatal(...any)
+	Fatalf(format string, args ...any)
 	Fatalw(msg string, fields ...Field)
 
-	Panic(...interface{})
-	Panicf(format string, args ...interface{})
+	Panic(...any)
+	Panicf(format string, args ...any)
 	Panicw(msg string, fields ...Field)
 }
 
@@ -429,7 +429,7 @@ func (l *dazlLogger) WithSkipCalls(calls int) Logger {
 	}
 }
 
-func (l *dazlLogger) Debug(args ...interface{}) {
+func (l *dazlLogger) Debug(args ...any) {
 	if l.Level().Enabled(DebugLevel) && l.sampler.Sample(DebugLevel) {
 		for _, output := range l.outputs {
 			output.Debug(fmt.Sprint(args...))
@@ -437,7 +437,7 @@ func (l *dazlLogger) Debug(args ...interface{}) {
 	}
 }
 
-func (l *dazlLogger) Debugf(format string, args ...interface{}) {
+func (l *dazlLogger) Debugf(format string, args ...any) {
 	if l.Level().Enabled(DebugLevel) && l.sampler.Sample(DebugLevel) {
 		for _, output := range l.outputs {
 			output.Debug(fmt.Sprintf(format, args...))
@@ -449,7 +449,7 @@ func (l *dazlLogger) Debugw(msg string, fields ...Field) {
 	l.WithFields(fields...).Debug(msg)
 }
 
-func (l *dazlLogger) Info(args ...interface{}) {
+func (l *dazlLogger) Info(args ...any) {
 	if l.Level().Enabled(InfoLevel) && l.sampler.Sample(InfoLevel) {
 		for _, output := range l.outputs {
 			output.Info(fmt.Sprint(args...))
@@ -457,7 +457,7 @@ func (l *dazlLogger) Info(args ...interface{}) {
 	}
 }
 
-func (l *dazlLogger) Infof(format string, args ...interface{}) {
+func (l *dazlLogger) Infof(format string, args ...any) {
 	if l.Level().Enabled(InfoLevel) && l.sampler.Sample(InfoLevel) {
 		for _, output := range l.outputs {
 			output.Info(fmt.Sprintf(format, args...))
@@ -469,7 +469,7 @@ func (l *dazlLogger) Infow(msg string, fields ...Field) {
 	l.WithFields(fields...).Info(msg)
 }
 
-func (l *dazlLogger) Warn(args ...interface{}) {
+func (l *dazlLogger) Warn(args ...any) {
 	if l.Level().Enabled(WarnLevel) && l.sampler.Sample(WarnLevel) {
 		for _, output := range l.outputs {
 			output.Warn(fmt.Sprint(args...))
@@ -477,7 +477,7 @@ func (l *dazlLogger) Warn(args ...interface{}) {
 	}
 }
 
-func (l *dazlLogger) Warnf(format string, args ...interface{}) {
+func (l *dazlLogger) Warnf(format string, args ...any) {
 	if l.Level().Enabled(WarnLevel) && l.sampler.Sample(WarnLevel) {
 		for _, output := range l.outputs {
 			output.Warn(fmt.Sprintf(format, args...))
@@ -489,7 +489,7 @@ func (l *dazlLogger) Warnw(msg string, fields ...Field) {
 	l.WithFields(fields...).Warn(msg)
 }
 
-func (l *dazlLogger) Error(args ...interface{}) {
+func (l *dazlLogger) Error(args ...any) {
 	if l.Level().Enabled(ErrorLevel) && l.sampler.Sample(ErrorLevel) {
 		for _, output := range l.outputs {
 			output.Error(fmt.Sprint(args...))
@@ -497,7 +497,7 @@ func (l *dazlLogger) Error(args ...interface{}) {
 	}
 }
 
-func (l *dazlLogger) Errorf(format string, args ...interface{}) {
+func (l *dazlLogger) Errorf(format string, args ...any) {
 	if l.Level().Enabled(ErrorLevel) && l.sampler.Sample(ErrorLevel) {
 		for _, output := range l.outputs {
 			output.Error(fmt.Sprintf(format, args...))
@@ -509,7 +509,7 @@ func (l *dazlLogger) Errorw(msg string, fields ...Field) {
 	l.WithFields(fields...).Error(msg)
 }
 
-func (l *dazlLogger) Fatal(args ...interface{}) {
+func (l *dazlLogger) Fatal(args ...any) {
 	if l.Level().Enabled(FatalLevel) && l.sampler.Sample(FatalLevel) {
 		for _, output := range l.outputs {
 			output.Fatal(fmt.Sprint(args...))
@@ -517,7 +517,7 @@ func (l *dazlLogger) Fatal(args ...interface{}) {
 	}
 }
 
-func (l *dazlLogger) Fatalf(format string, args ...interface{}) {
+func (l *dazlLogger) Fatalf(format string, args ...any) {
 	if l.Level().Enabled(FatalLevel) && l.sampler.Sample(FatalLevel) {
 		for _, output := range l.outputs {
 			output.Fatal(fmt.Sprintf(format, args...))
@@ -529,7 +529,7 @@ func (l *dazlLogger) Fatalw(msg string, fields ...Field) {
 	l.WithFields(fields...).Fatal(msg)
 }
 
-func (l *dazlLogger) Panic(args ...interface{}) {
+func (l *dazlLogger) Panic(args ...any) {
 	if l.Level().Enabled(PanicLevel) && l.sampler.Sample(PanicLevel) {
 		for _, output := range l.outputs {
 			output.Panic(fmt.Sprint(args...))
@@ -537,7 +537,7 @@ func (l *dazlLogger) Panic(args ...interface{}) {
 	}
 }
 
-func (l *dazlLogger) Panicf(format string, args ...interface{}) {
+func (l *dazlLogger) Panicf(format string, args ...any) {
 	if l.Level().Enabled(PanicLevel) && l.sampler.Sample(PanicLevel) {
 		for _, output := range l.outputs {
 			output.Panic(fmt.Sprintf(format, args...))
