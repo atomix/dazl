@@ -38,5 +38,14 @@ jobs:
       - name: Run tests
         run: go test -race -coverprofile=coverage.txt -covermode=atomic
 
+      - name: Run zap tests
+        run: go test -race -coverprofile=coverage.txt -covermode=atomic
+        working-directory: zap
+
+      - name: Run zerolog tests
+        run: go test -race -coverprofile=coverage.txt -covermode=atomic
+        working-directory: zerolog
+
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
+        files: ./coverage.txt,zap/coverage.txt,zerolog/coverage.txt
