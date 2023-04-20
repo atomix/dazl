@@ -17,7 +17,7 @@ func TestJSONEncoder(t *testing.T) {
 	buf := &bytes.Buffer{}
 	writer, err := encoder.NewWriter(buf)
 	assert.NoError(t, err)
-	writer.Info("Hello world!")
+	writer.Debug("Hello world!")
 	assert.Equal(t, "{\"message\":\"Hello world!\"}\n", buf.String())
 	buf.Reset()
 
@@ -33,12 +33,12 @@ func TestJSONEncoder(t *testing.T) {
 	assert.NoError(t, err)
 	writer, err = encoder.NewWriter(buf)
 	assert.NoError(t, err)
-	writer.Info("Hello world!")
+	writer.Warn("Hello world!")
 	assert.Equal(t, "{\"msg\":\"Hello world!\"}\n", buf.String())
 	buf.Reset()
 
 	writer = writer.WithName("test")
-	writer.Info("Hello world!")
+	writer.Error("Hello world!")
 	assert.Equal(t, "{\"logger\":\"test\",\"msg\":\"Hello world!\"}\n", buf.String())
 	buf.Reset()
 
@@ -63,16 +63,16 @@ func TestJSONEncoder(t *testing.T) {
 	assert.NoError(t, err)
 	writer, err = encoder.NewWriter(buf)
 	assert.NoError(t, err)
-	writer.Info("Hello world!")
-	assert.Equal(t, "{\"lvl\":\"info\",\"msg\":\"Hello world!\"}\n", buf.String())
+	writer.Warn("Hello world!")
+	assert.Equal(t, "{\"lvl\":\"warn\",\"msg\":\"Hello world!\"}\n", buf.String())
 	buf.Reset()
 
 	encoder, err = encoder.(dazl.LevelFormattingEncoder).WithLevelFormat(dazl.UpperCaseLevelFormat)
 	assert.NoError(t, err)
 	writer, err = encoder.NewWriter(buf)
 	assert.NoError(t, err)
-	writer.Info("Hello world!")
-	assert.Equal(t, "{\"lvl\":\"INFO\",\"msg\":\"Hello world!\"}\n", buf.String())
+	writer.Error("Hello world!")
+	assert.Equal(t, "{\"lvl\":\"ERROR\",\"msg\":\"Hello world!\"}\n", buf.String())
 	buf.Reset()
 
 	encoder, err = encoder.(dazl.CallerEncoder).WithCallerEnabled()
@@ -98,7 +98,7 @@ func TestConsoleEncoder(t *testing.T) {
 	buf := &bytes.Buffer{}
 	writer, err := encoder.NewWriter(buf)
 	assert.NoError(t, err)
-	writer.Info("Hello world!")
+	writer.Debug("Hello world!")
 	assert.Equal(t, "Hello world!\n", buf.String())
 	buf.Reset()
 
@@ -111,7 +111,7 @@ func TestConsoleEncoder(t *testing.T) {
 	buf.Reset()
 
 	writer = writer.WithName("test")
-	writer.Info("Hello world!")
+	writer.Warn("Hello world!")
 	assert.Equal(t, "test\tHello world!\n", buf.String())
 	buf.Reset()
 
@@ -119,8 +119,8 @@ func TestConsoleEncoder(t *testing.T) {
 	assert.NoError(t, err)
 	writer, err = encoder.NewWriter(buf)
 	assert.NoError(t, err)
-	writer.Info("Hello world!")
-	assert.Equal(t, "info\tHello world!\n", buf.String())
+	writer.Error("Hello world!")
+	assert.Equal(t, "error\tHello world!\n", buf.String())
 	buf.Reset()
 
 	encoder, err = encoder.(dazl.LevelFormattingEncoder).WithLevelFormat(dazl.UpperCaseLevelFormat)
@@ -135,7 +135,7 @@ func TestConsoleEncoder(t *testing.T) {
 	assert.NoError(t, err)
 	writer, err = encoder.NewWriter(buf)
 	assert.NoError(t, err)
-	writer.Info("Hello world!")
-	assert.Equal(t, "INFO\tzap/framework_test.go:138\tHello world!\n", buf.String())
+	writer.Warn("Hello world!")
+	assert.Equal(t, "WARN\tzap/framework_test.go:138\tHello world!\n", buf.String())
 	buf.Reset()
 }
