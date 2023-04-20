@@ -3,7 +3,7 @@ module github.com/atomix/dazl/zerolog
 go 1.19
 
 require (
-	github.com/atomix/dazl v1.0.0
+	github.com/atomix/dazl v1.0.1-0.20230420194204-3def4c62b968
 	github.com/rs/zerolog v1.29.0
 	github.com/stretchr/testify v1.8.0
 )
@@ -17,5 +17,3 @@ require (
 	golang.org/x/sys v0.0.0-20210927094055-39ccf1dd6fa6 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
-
-replace github.com/atomix/dazl => ../
