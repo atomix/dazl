@@ -12,6 +12,7 @@ import (
 )
 
 const configFile = "logging.yaml"
+const configEnv = "LOGGING_CONFIG"
 
 type loggingConfig struct {
 	Encoders   encodersConfig          `json:"encoders" yaml:"encoders"`
@@ -34,6 +35,16 @@ func (c *loggingConfig) getLogger(name string) (loggerConfig, bool) {
 
 // load the dazl configuration
 func load(config *loggingConfig) error {
+	configPath := os.Getenv(configEnv)
+	if configPath != "" {
+		bytes, err := os.ReadFile(configPath)
+		if err == nil {
+			return yaml.Unmarshal(bytes, config)
+		} else if !os.IsNotExist(err) {
+			return err
+		}
+	}
+
 	bytes, err := os.ReadFile(configFile)
 	if err == nil {
 		return yaml.Unmarshal(bytes, config)
