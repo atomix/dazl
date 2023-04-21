@@ -20,6 +20,7 @@ func TestLoggerNames(t *testing.T) {
 	assert.Equal(t, "", root.Name())
 	assert.Equal(t, "foo", GetLogger("foo").Name())
 	assert.Equal(t, "foo/bar", GetLogger("foo/bar").Name())
+	assert.Equal(t, "github.com/atomix/dazl", GetLogger().Name())
 	assert.Equal(t, "github.com/atomix/dazl", GetPackageLogger().Name())
 }
 

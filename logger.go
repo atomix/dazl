@@ -42,8 +42,17 @@ func GetPackageLogger() Logger {
 }
 
 // GetLogger gets the logger for the given path.
-func GetLogger(path string) Logger {
-	return root.GetLogger(path)
+func GetLogger(path ...string) Logger {
+	if len(path) == 0 {
+		pkg, ok := getCallerPackage()
+		if !ok {
+			panic("could not retrieve logger package")
+		}
+		return root.GetLogger(pkg)
+	} else if len(path) == 1 {
+		return root.GetLogger(path[0])
+	}
+	return root.GetLogger(strings.Join(path, pathSep))
 }
 
 // Logger represents an abstract logging interface.

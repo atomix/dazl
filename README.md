@@ -105,7 +105,7 @@ import (
     _ "github.com/atomix/dazl/zap"
 )
 
-var log = dazl.GetPackageLogger()
+var log = dazl.GetLogger()
 
 func main() {
     log.Info("Hello world!")
@@ -214,18 +214,18 @@ func main() {
 The typical usage of the framework is to create a `Logger` once at the top of each Go package:
 
 ```go
-var log = dazl.GetPackageLogger()
+var log = dazl.GetLogger()
 ```
 
-Package loggers are assigned the name of the package calling the `GetPackageLogger()` function. So, if you
-call `dazl.GetPackageLogger()` from the `github.com/atomix/atomix/runtime` package, the logger will be assigned the
+Package loggers are assigned the name of the package calling `GetLogger()` or `GetPackageLogger()`. So, if you
+call `dazl.GetLogger()` from the `github.com/atomix/atomix/runtime` package, the logger will be assigned the
 name `github.com/atomix/atomix/runtime`. The naming strategy becomes important for
 [logger configuration](#configuration) and, in particular, [inheritance](#inheritance).
 
 ```go
 const author = "kuujo"
 
-var log = dazl.GetPackageLogger()
+var log = dazl.GetLogger()
 
 func main() {
     log.Infof("The author of dazl is %s", author)
@@ -304,7 +304,7 @@ log.Warnw("Something went wrong!",
 Alternatively, you can create a structured logger with a fixed set of fields using the `WithFields` method:
 
 ```go
-var log = dazl.GetPackageLogger().WithFields(
+var log = dazl.GetLogger().WithFields(
     dazl.String("user", user.Name),
     dazl.Uint64("id", user.ID))
 log.Warn("Something went wrong!")
