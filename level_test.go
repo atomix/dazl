@@ -19,10 +19,10 @@ func TestLevel(t *testing.T) {
 	assert.True(t, WarnLevel.Enabled(WarnLevel))
 	assert.False(t, ErrorLevel.Enabled(WarnLevel))
 	assert.True(t, ErrorLevel.Enabled(ErrorLevel))
-	assert.False(t, FatalLevel.Enabled(ErrorLevel))
-	assert.True(t, FatalLevel.Enabled(FatalLevel))
-	assert.False(t, PanicLevel.Enabled(FatalLevel))
+	assert.False(t, PanicLevel.Enabled(ErrorLevel))
 	assert.True(t, PanicLevel.Enabled(PanicLevel))
+	assert.False(t, FatalLevel.Enabled(PanicLevel))
+	assert.True(t, FatalLevel.Enabled(FatalLevel))
 }
 
 const testLevel = "info"

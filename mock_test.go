@@ -51,11 +51,12 @@ func (mr *MockEncoderMockRecorder) NewWriter(arg0 interface{}) *gomock.Call {
 }
 
 // WithMessageKey mocks base method.
-func (m *MockEncoder) WithMessageKey(arg0 string) Encoder {
+func (m *MockEncoder) WithMessageKey(arg0 string) (Encoder, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "WithMessageKey", arg0)
 	ret0, _ := ret[0].(Encoder)
-	return ret0
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // WithMessageKey indicates an expected call of WithMessageKey.

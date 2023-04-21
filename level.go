@@ -18,10 +18,10 @@ const (
 	WarnLevel
 	// ErrorLevel logs a message at error level
 	ErrorLevel
-	// FatalLevel logs a message, then calls os.Exit(1).
-	FatalLevel
 	// PanicLevel logs a message, then panics.
 	PanicLevel
+	// FatalLevel logs a message, then calls os.Exit(1).
+	FatalLevel
 )
 
 // Enabled indicates whether the log level is enabled
@@ -31,7 +31,7 @@ func (l Level) Enabled(level Level) bool {
 
 // String :
 func (l Level) String() string {
-	return [...]string{"", "debug", "info", "warn", "error", "fatal", "panic"}[l]
+	return [...]string{"", "debug", "info", "warn", "error", "panic", "fatal"}[l]
 }
 
 type levelConfig Level
@@ -50,10 +50,10 @@ func (c *levelConfig) UnmarshalText(text []byte) error {
 		*c = levelConfig(WarnLevel)
 	case ErrorLevel.String():
 		*c = levelConfig(ErrorLevel)
-	case FatalLevel.String():
-		*c = levelConfig(FatalLevel)
 	case PanicLevel.String():
 		*c = levelConfig(PanicLevel)
+	case FatalLevel.String():
+		*c = levelConfig(FatalLevel)
 	default:
 		*c = levelConfig(EmptyLevel)
 	}
