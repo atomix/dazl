@@ -86,10 +86,6 @@ particular logging backend, applications should only import a specific logging f
 Libraries designed to be imported by other projects should never import a logging backend themselves. Instead, leave
 the specific logging framework implementation up to your users.
 
-Currently, dazl provides backends for the following logging frameworks:
-* [zap](#logging-with-zap)
-* [zerolog](#logging-with-zerolog)
-
 The logging backend is configured by importing the framework into your application's `main` package.
 
 ### Logging with zap
