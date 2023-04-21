@@ -38,6 +38,9 @@ jobs:
       - name: Run tests
         run: go test -race -coverprofile=coverage.txt -covermode=atomic
 
+      - name: Run fuzz tests
+        run: go test -fuzz=FuzzLogger -fuzztime=1m
+
       - name: Run zap tests
         run: go test -race -coverprofile=coverage.txt -covermode=atomic
         working-directory: zap
