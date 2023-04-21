@@ -3,7 +3,7 @@ module github.com/atomix/dazl/zerolog
 go 1.19
 
 require (
-	github.com/atomix/dazl v1.1.1
+	github.com/atomix/dazl v1.1.2
 	github.com/rs/zerolog v1.29.0
 	github.com/stretchr/testify v1.8.0
 )

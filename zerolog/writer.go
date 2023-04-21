@@ -44,24 +44,27 @@ func (w *Writer) Warn(msg string) {
 
 func (w *Writer) withLogger(logger zerolog.Logger) dazl.Writer {
 	return &Writer{
-		logger:  logger,
-		nameKey: w.nameKey,
-		name:    w.name,
+		logger:     logger,
+		nameKey:    w.nameKey,
+		name:       w.name,
+		skipFrames: w.skipFrames,
 	}
 }
 
 func (w *Writer) WithName(name string) dazl.Writer {
 	if w.nameKey != "" {
 		return &Writer{
-			logger:  w.logger.With().Str(w.nameKey, name).Logger(),
-			nameKey: w.nameKey,
-			name:    name,
+			logger:     w.logger.With().Str(w.nameKey, name).Logger(),
+			nameKey:    w.nameKey,
+			name:       name,
+			skipFrames: w.skipFrames,
 		}
 	}
 	return &Writer{
-		logger:  w.logger,
-		nameKey: name,
-		name:    name,
+		logger:     w.logger,
+		nameKey:    name,
+		name:       name,
+		skipFrames: w.skipFrames,
 	}
 }
 
