@@ -51,6 +51,9 @@ type Logger interface {
 	// Name returns the logger name
 	Name() string
 
+	// Log returns the contextual logger
+	Log() ContextualLogger
+
 	// GetLogger gets a descendant of this Logger
 	GetLogger(path string) Logger
 
@@ -339,6 +342,12 @@ type dazlLogger struct {
 
 func (l *dazlLogger) Name() string {
 	return l.name
+}
+
+func (l *dazlLogger) Log() ContextualLogger {
+	return ContextualLogger{
+		logger: l,
+	}
 }
 
 func (l *dazlLogger) Level() Level {
