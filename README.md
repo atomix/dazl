@@ -14,11 +14,20 @@ SPDX-License-Identifier: Apache-2.0
 
 ## Configurable abstraction layer for Go logging frameworks
 
-Dazl is not just another Go logging framework. There's no shortage of good logging frameworks within the Go ecosystem,
-and we're not here to reinvent Go logging for the nth time. Dazl is logging abstraction layer that provides a unified
-interface and configuration format for existing logging frameworks like [zap](https://github.com/uber-go/zap) and
-[zerolog](https://github.com/rs/zerolog), using an approach that's been proven in other languages, such as Java's
-[slf4j](https://slf4j.org) logging facade.
+Dazl is not just another Go logging framework. We're not here to reinvent Go logging for the nth time. Dazl is 
+logging abstraction layer that provides a unified interface and configuration format for existing logging frameworks
+using a proven approach adapted from popular frameworks in other languages like [slf4j](https://slf4j.org).
+
+Dazl provides an extensible logging backend with support for multiple existing frameworks:
+* [zap](https://github.com/uber-go/zap)
+* [zerolog](https://github.com/rs/zerolog)
+
+This enables dazl to add a number of features on top of existing logging frameworks:
+* Decouples Go libraries from specific logging implementations
+* Makes logging configurable via YAML configuration files
+* Structured logging with support for JSON or console encoding and user-defined fields
+* Hierarchical loggers, inheritance, sampling and other advanced features
+* Supports runtime configuration changes for easy debugging
 
 # User Guide
 
