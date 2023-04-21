@@ -352,6 +352,7 @@ func TestLoggerMethods(t *testing.T) {
 	}))
 
 	stdout.EXPECT().WithName(gomock.Eq("test")).Return(stdout)
+	stdout.EXPECT().WithSkipCalls(gomock.Eq(1)).Return(stdout).AnyTimes()
 	log := GetLogger("test")
 
 	stdout.EXPECT().Debug(gomock.Eq("debug"))
