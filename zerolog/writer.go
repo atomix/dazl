@@ -74,6 +74,10 @@ func (w *Writer) WithSkipCalls(calls int) dazl.Writer {
 	}
 }
 
+func (w *Writer) WithErrorField(err error) dazl.Writer {
+	return w.withLogger(w.logger.With().Err(err).Logger())
+}
+
 func (w *Writer) WithStringField(name string, value string) dazl.Writer {
 	return w.withLogger(w.logger.With().Str(name, value).Logger())
 }
