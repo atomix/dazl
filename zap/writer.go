@@ -104,54 +104,6 @@ func (w *Writer) WithBytesField(name string, value []byte) dazl.Writer {
 	return w.withField(zap.ByteString(name, value))
 }
 
-func (w *Writer) WithStringPointerField(name string, value *string) dazl.Writer {
-	return w.withField(zap.Stringp(name, value))
-}
-
-func (w *Writer) WithBoolPointerField(name string, value *bool) dazl.Writer {
-	return w.withField(zap.Boolp(name, value))
-}
-
-func (w *Writer) WithIntPointerField(name string, value *int) dazl.Writer {
-	return w.withField(zap.Intp(name, value))
-}
-
-func (w *Writer) WithInt32PointerField(name string, value *int32) dazl.Writer {
-	return w.withField(zap.Int32p(name, value))
-}
-
-func (w *Writer) WithInt64PointerField(name string, value *int64) dazl.Writer {
-	return w.withField(zap.Int64p(name, value))
-}
-
-func (w *Writer) WithUintPointerField(name string, value *uint) dazl.Writer {
-	return w.withField(zap.Uintp(name, value))
-}
-
-func (w *Writer) WithUint32PointerField(name string, value *uint32) dazl.Writer {
-	return w.withField(zap.Uint32p(name, value))
-}
-
-func (w *Writer) WithUint64PointerField(name string, value *uint64) dazl.Writer {
-	return w.withField(zap.Uint64p(name, value))
-}
-
-func (w *Writer) WithFloat32PointerField(name string, value *float32) dazl.Writer {
-	return w.withField(zap.Float32p(name, value))
-}
-
-func (w *Writer) WithFloat64PointerField(name string, value *float64) dazl.Writer {
-	return w.withField(zap.Float64p(name, value))
-}
-
-func (w *Writer) WithTimePointerField(name string, value *time.Time) dazl.Writer {
-	return w.withField(zap.Timep(name, value))
-}
-
-func (w *Writer) WithDurationPointerField(name string, value *time.Duration) dazl.Writer {
-	return w.withField(zap.Durationp(name, value))
-}
-
 func (w *Writer) WithStringSliceField(name string, values []string) dazl.Writer {
 	return w.withField(zap.Strings(name, values))
 }
