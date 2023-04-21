@@ -470,7 +470,7 @@ func (l *dazlLogger) Debugf(format string, args ...any) {
 }
 
 func (l *dazlLogger) Debugw(msg string, fields ...Field) {
-	l.WithFields(fields...).Debug(msg)
+	l.WithFields(fields...).WithSkipCalls(1).Debug(msg)
 }
 
 func (l *dazlLogger) Info(args ...any) {
@@ -490,7 +490,7 @@ func (l *dazlLogger) Infof(format string, args ...any) {
 }
 
 func (l *dazlLogger) Infow(msg string, fields ...Field) {
-	l.WithFields(fields...).Info(msg)
+	l.WithFields(fields...).WithSkipCalls(1).Info(msg)
 }
 
 func (l *dazlLogger) Warn(args ...any) {
@@ -510,7 +510,7 @@ func (l *dazlLogger) Warnf(format string, args ...any) {
 }
 
 func (l *dazlLogger) Warnw(msg string, fields ...Field) {
-	l.WithFields(fields...).Warn(msg)
+	l.WithFields(fields...).WithSkipCalls(1).Warn(msg)
 }
 
 func (l *dazlLogger) Error(args ...any) {
@@ -530,7 +530,7 @@ func (l *dazlLogger) Errorf(format string, args ...any) {
 }
 
 func (l *dazlLogger) Errorw(msg string, fields ...Field) {
-	l.WithFields(fields...).Error(msg)
+	l.WithFields(fields...).WithSkipCalls(1).Error(msg)
 }
 
 func (l *dazlLogger) Fatal(args ...any) {
@@ -550,7 +550,7 @@ func (l *dazlLogger) Fatalf(format string, args ...any) {
 }
 
 func (l *dazlLogger) Fatalw(msg string, fields ...Field) {
-	l.WithFields(fields...).Fatal(msg)
+	l.WithFields(fields...).WithSkipCalls(1).Fatal(msg)
 }
 
 func (l *dazlLogger) Panic(args ...any) {
@@ -570,7 +570,7 @@ func (l *dazlLogger) Panicf(format string, args ...any) {
 }
 
 func (l *dazlLogger) Panicw(msg string, fields ...Field) {
-	l.WithFields(fields...).Panic(msg)
+	l.WithFields(fields...).WithSkipCalls(1).Panic(msg)
 }
 
 var _ Logger = &dazlLogger{}

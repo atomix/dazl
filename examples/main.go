@@ -17,5 +17,5 @@ var log = dazl.GetPackageLogger()
 const projectName = "dazl"
 
 func main() {
-	log.Infof("%s is a logging framework for Go", projectName)
+	log.Infow("dazl is a logging framework for Go", dazl.String("foo", "bar"))
 }

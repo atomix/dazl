@@ -12,7 +12,7 @@ encoders:
       - timestamp:
           format: ISO8601
       - caller #:
-          #format: short
+      #format: short
       #- stacktrace
   json:
     fields:
