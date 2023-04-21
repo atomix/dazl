@@ -3,15 +3,13 @@ SPDX-FileCopyrightText: 2023-present Intel Corporation
 SPDX-License-Identifier: Apache-2.0
 -->
 
-[![release](https://img.shields.io/github/v/tag/atomix/dazl?label=latest)](https://github.com/atomix/dazl/tags)
-[![license](https://img.shields.io/badge/License-Apache_2.0-blue.svg?label=license)](https://opensource.org/licenses/Apache-2.0)
-[![reference](https://pkg.go.dev/badge/github.com/atomix/dazl)](https://pkg.go.dev/github.com/atomix/dazl)
-
 # dazl
 
 [![build](https://img.shields.io/github/actions/workflow/status/atomix/dazl/test.yml)](https://github.com/atomix/dazl/actions/workflows/test.yml)
 [![Go Report Card](https://goreportcard.com/badge/github.com/atomix/dazl)](https://goreportcard.com/report/github.com/atomix/dazl)
 [![codecov](https://codecov.io/gh/atomix/dazl/branch/master/graph/badge.svg?token=NTBMFA3GIN)](https://codecov.io/gh/atomix/dazl)
+[![license](https://img.shields.io/badge/License-Apache_2.0-blue.svg?label=license)](https://opensource.org/licenses/Apache-2.0)
+[![reference](https://pkg.go.dev/badge/github.com/atomix/dazl)](https://pkg.go.dev/github.com/atomix/dazl)
 
 ## Configurable abstraction layer for Go logging frameworks
 
