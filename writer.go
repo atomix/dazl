@@ -60,7 +60,7 @@ type FieldWriter interface {
 }
 
 type ErrorFieldWriter interface {
-	WithErrorField(name string, err error) Writer
+	WithErrorField(err error) Writer
 }
 
 type StringerFieldWriter interface {

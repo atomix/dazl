@@ -14,14 +14,14 @@ import (
 // Field is a structured logger field
 type Field func(writer Writer) (Writer, error)
 
-// Error creates a named field for an error
-func Error(name string, err error) Field {
+// Error creates a field for an error
+func Error(err error) Field {
 	return func(writer Writer) (Writer, error) {
 		if fieldWriter, ok := writer.(ErrorFieldWriter); ok {
-			return fieldWriter.WithErrorField(name, err), nil
+			return fieldWriter.WithErrorField(err), nil
 		}
 		if fieldWriter, ok := writer.(StringFieldWriter); ok {
-			return fieldWriter.WithStringField(name, err.Error()), nil
+			return fieldWriter.WithStringField("error", err.Error()), nil
 		}
 		return nil, fmt.Errorf("field type is not supported by the configured logging framework")
 	}

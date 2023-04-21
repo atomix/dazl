@@ -499,18 +499,28 @@ type testErrorWriter struct {
 	testWriter
 }
 
-func (w *testErrorWriter) WithErrorField(name string, value error) Writer {
-	assert.Equal(w.T, "foo", name)
+func (w *testErrorWriter) WithErrorField(value error) Writer {
 	assert.Equal(w.T, errors.New("test"), value)
+	return w
+}
+
+type testErrorStringWriter struct {
+	testWriter
+	Value string
+}
+
+func (w *testErrorStringWriter) WithStringField(name string, value string) Writer {
+	assert.Equal(w.T, "error", name)
+	assert.Equal(w.T, w.Value, value)
 	return w
 }
 
 func TestErrorField(t *testing.T) {
 	writer := testWriter{T: t}
-	_, err := Error("foo", errors.New("test"))(&testErrorWriter{writer})
+	_, err := Error(errors.New("test"))(&testErrorWriter{writer})
 	assert.NoError(t, err)
-	_, err = Error("foo", errors.New("test"))(&testStringWriter{testWriter: writer, Value: "test"})
+	_, err = Error(errors.New("test"))(&testErrorStringWriter{testWriter: writer, Value: "test"})
 	assert.NoError(t, err)
-	_, err = Error("foo", errors.New("test"))(writer)
+	_, err = Error(errors.New("test"))(writer)
 	assert.Error(t, err)
 }
