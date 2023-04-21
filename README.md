@@ -13,15 +13,15 @@ SPDX-License-Identifier: Apache-2.0
 
 ## Configurable abstraction layer for Go logging frameworks
 
-Dazl is not just another Go logging framework. We're not here to reinvent Go logging for the nth time. Dazl is 
-logging abstraction layer that provides a unified interface and configuration format for existing logging frameworks
+Dazl is not just another Go logging framework. We're not here to reinvent Go logging for the nth time. Dazl is an
+abstraction layer that provides a unified interface and configuration format on top of existing logging frameworks,
 using a proven approach adapted from popular frameworks in other languages like [slf4j](https://slf4j.org).
 
-Dazl provides an extensible logging backend with support for multiple existing frameworks:
+Dazl is a pluggable logging abstraction with support for multiple existing backend frameworks:
 * [zap](https://github.com/uber-go/zap)
 * [zerolog](https://github.com/rs/zerolog)
 
-This enables dazl to add a number of features on top of existing logging frameworks:
+Dazl loggers add numerous features on top of existing frameworks:
 * Decouples Go libraries from specific logging implementations
 * Makes logging configurable via YAML configuration files
 * Structured logging with support for JSON or console encoding and user-defined fields
@@ -34,7 +34,13 @@ This enables dazl to add a number of features on top of existing logging framewo
   * [Logging in Go libraries](#logging-in-go-libraries)
   * [Configuration of Go services](#configuration-of-go-application-logging)
 * [Getting started](#getting-started)
-  * [Usage](#usage)
+  * [Add the dazl dependency](#add-the-dazl-dependencies)
+  * [Import a logging backend](#import-a-logging-backend)
+  * [Configure logging](#configure-logging)
+  * [Run the application](#run-the-application)
+* [Go API](#go-api)
+  * [Initializing the framework](#initializing-the-logging-framework)
+  * [Working with loggers](#loggers)
   * [Log levels](#log-levels)
   * [Structured logging](#structured-logging)
 * [Configuration files](#configuration-files)
@@ -72,11 +78,85 @@ code, eliminating the need to recompile code to modify the verbosity or format o
 
 # Getting started
 
+## Add the dazl dependencies
+
 To start using dazl, first add the framework to your `go.mod`:
 
 ```bash
 go get -u github.com/atomix/dazl
 ```
+
+Additionally, add the dependency for one of the [logging backends](#initializing-the-logging-framework)L
+
+```bash
+go get -u github.com/atomix/dazl/zap
+```
+
+## Import a logging backend
+
+Import the logging backend in your module `main`:
+
+`main.go`
+```go
+package main
+
+import (
+    "github.com/atomix/dazl"
+    _ "github.com/atomix/dazl/zap"
+)
+
+var log = dazl.GetPackageLogger()
+
+func main() {
+    log.Info("Hello world!")
+}
+```
+
+To avoid adding unnecessary dependencies on logging frameworks, logging backends should only be imported within
+your module `main`.
+
+## Configure logging
+
+Create a `logging.yaml` file to configure the logging framework:
+
+`logging.yaml`
+```yaml
+encoders:
+  json:
+    fields:
+      - message
+      - level:
+          format: uppercase
+      - caller:
+          format: short
+      - timestamp:
+          format: iso8601
+
+writers:
+  stdout:
+    encoder: json
+
+rootLogger:
+  level: info
+  outputs:
+    - stdout
+```
+
+To print logs to an output, the `logging.yaml` configuration must configure one or more `writers` and configure the
+`rootLogger` or child `loggers` with `outputs` to output messages from those loggers to the configured writer(s).
+
+## Run the application
+
+Finally, when you run the application `main` from the same directory as your `logging.yaml` file, you should see
+the logs printed to stdout:
+
+```bash
+go run ./main.go
+```
+
+For more information [check out the example module](./examples).
+
+# Go API
 
 ## Initializing the logging framework
 
@@ -129,7 +209,7 @@ func main() {
 }
 ```
 
-## Usage
+## Loggers
 
 The typical usage of the framework is to create a `Logger` once at the top of each Go package:
 
