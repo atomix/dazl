@@ -32,7 +32,7 @@ This enables dazl to add a number of features on top of existing logging framewo
 
 * [Use cases](#use-cases)
   * [Logging in Go libraries](#logging-in-go-libraries)
-  * [Configuration of Go services](#configuration-of-logging-in-go-applications)
+  * [Configuration of Go services](#configuration-of-go-application-logging)
 * [Getting started](#getting-started)
   * [Usage](#usage)
   * [Log levels](#log-levels)
@@ -50,12 +50,12 @@ This enables dazl to add a number of features on top of existing logging framewo
   * [Custom encoders](#encoding)
   * [Custom writers](#log-writers)
 
-# Use cases
+## Use cases
 
 There are numerous benefits to using a logging abstraction, but dazl is designed to serve a couple of important use 
 cases for two types of applications in particular.
 
-## Logging in Go libraries
+### Logging in Go libraries
 
 Go libraries designed to be imported and used by other Go modules can use dazl to avoid adding a dependency on a 
 specific logging framework, tying their users to the same framework. Additionally, dazl enables your users to configure
@@ -63,7 +63,7 @@ loggers and log formats indepenedently, with no added work for you. The users of
 select their own logging framework and configure the format and severity of log outputs. Simply add a dependency on
 the dazl logger, and leave it up to your users to import whichever logging backend they desire.
 
-## Configuration of logging in Go applications
+### Configuration of Go application logging
 
 One of the most common use cases for Go applications is in cloud applications deployed in containers and on platforms
 like Kubernetes. Most Go logging frameworks provide programmatic APIs for configuring loggers, levels, formats, and
