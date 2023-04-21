@@ -18,6 +18,24 @@ func TestLoggerNames(t *testing.T) {
 	assert.Equal(t, "github.com/atomix/dazl", GetPackageLogger().Name())
 }
 
+func TestLoggerLevels(t *testing.T) {
+	assert.Equal(t, EmptyLevel, GetRootLogger().Level())
+	assert.Equal(t, EmptyLevel, GetLogger("foo").Level())
+	assert.Equal(t, EmptyLevel, GetLogger("foo/bar/baz").Level())
+	GetRootLogger().SetLevel(DebugLevel)
+	assert.Equal(t, DebugLevel, GetRootLogger().Level())
+	assert.Equal(t, DebugLevel, GetLogger("foo").Level())
+	assert.Equal(t, DebugLevel, GetLogger("foo/bar/baz").Level())
+	GetLogger("foo").SetLevel(InfoLevel)
+	assert.Equal(t, DebugLevel, GetRootLogger().Level())
+	assert.Equal(t, InfoLevel, GetLogger("foo").Level())
+	assert.Equal(t, InfoLevel, GetLogger("foo/bar/baz").Level())
+	GetRootLogger().SetLevel(WarnLevel)
+	assert.Equal(t, WarnLevel, GetRootLogger().Level())
+	assert.Equal(t, InfoLevel, GetLogger("foo").Level())
+	assert.Equal(t, InfoLevel, GetLogger("foo/bar/baz").Level())
+}
+
 const testLoggerConfigArray = `
 level: debug
 sample:

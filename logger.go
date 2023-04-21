@@ -27,6 +27,11 @@ func init() {
 
 const pathSep = "/"
 
+// GetRootLogger returns the root logger
+func GetRootLogger() Logger {
+	return root
+}
+
 // GetPackageLogger gets the logger for the current package.
 func GetPackageLogger() Logger {
 	pkg, ok := getCallerPackage()
@@ -352,8 +357,8 @@ func (l *dazlLogger) SetLevel(level Level) {
 }
 
 func (l *dazlLogger) setDefaultLevel(level Level) {
-	l.defaultLevel = level
 	if l.level == EmptyLevel {
+		l.defaultLevel = level
 		l.children.Range(func(key, value any) bool {
 			value.(*dazlLogger).setDefaultLevel(level)
 			return true
