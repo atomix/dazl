@@ -3,7 +3,7 @@ module github.com/atomix/dazl/zap
 go 1.19
 
 require (
-	github.com/atomix/dazl v1.1.0
+	github.com/atomix/dazl v1.1.1
 	github.com/stretchr/testify v1.8.0
 	go.uber.org/zap v1.24.0
 )

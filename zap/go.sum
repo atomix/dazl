@@ -1,5 +1,5 @@
-github.com/atomix/dazl v1.1.0 h1:uxtSbPOkdSTngtdiXdfo0Da5RwMF9p+FkINp31MneIE=
-github.com/atomix/dazl v1.1.0/go.mod h1:7QSujJwb/9XA448Rp90FYXeeRnTZYgmJ+XUyTI2xdRg=
+github.com/atomix/dazl v1.1.1 h1:P5OGyjZe6dayKxLDnG2/28BSxdLepvUWRzNf1JqbwGU=
+github.com/atomix/dazl v1.1.1/go.mod h1:7QSujJwb/9XA448Rp90FYXeeRnTZYgmJ+XUyTI2xdRg=
 github.com/benbjohnson/clock v1.1.0 h1:Q92kusRqC1XV2MjkWETPvjJVqKetz1OzxZB7mHJLju8=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
