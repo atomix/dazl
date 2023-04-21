@@ -29,8 +29,8 @@ encoders:
       - caller:
           key: caller
           format: short
-      - stacktrace:
-          key: trace
+      #- stacktrace:
+      #    key: trace
 
 writers:
   stdout:

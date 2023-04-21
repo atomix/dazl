@@ -226,8 +226,10 @@ func (e *jsonEncoder) WithCallerFormat(format dazl.CallerFormat) (dazl.Encoder, 
 	return e, nil
 }
 
+/*
 func (e *jsonEncoder) WithStacktraceEnabled() (dazl.Encoder, error) {
 	e.stacktrace = true
+	zerolog.ErrorStackMarshaler = pkgerrors.MarshalStack
 	return e, nil
 }
 
@@ -235,6 +237,7 @@ func (e *jsonEncoder) WithStacktraceKey(key string) (dazl.Encoder, error) {
 	zerolog.ErrorStackFieldName = key
 	return e, nil
 }
+*/
 
 var _ dazl.MessageKeyEncoder = (*jsonEncoder)(nil)
 var _ dazl.NameEncoder = (*jsonEncoder)(nil)
@@ -248,5 +251,6 @@ var _ dazl.TimestampFormattingEncoder = (*jsonEncoder)(nil)
 var _ dazl.CallerEncoder = (*jsonEncoder)(nil)
 var _ dazl.CallerKeyEncoder = (*jsonEncoder)(nil)
 var _ dazl.CallerFormattingEncoder = (*jsonEncoder)(nil)
-var _ dazl.StacktraceEncoder = (*jsonEncoder)(nil)
-var _ dazl.StacktraceKeyEncoder = (*jsonEncoder)(nil)
+
+//var _ dazl.StacktraceEncoder = (*jsonEncoder)(nil)
+//var _ dazl.StacktraceKeyEncoder = (*jsonEncoder)(nil)
