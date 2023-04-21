@@ -7,10 +7,10 @@ package main
 import "github.com/atomix/dazl"
 
 // To configure the zap logger, import the github.com/atomix/dazl/zap package
-//import _ "github.com/atomix/dazl/zap"
+import _ "github.com/atomix/dazl/zap"
 
 // To configure the zerolog logger, import the github.com/atomix/dazl/zerolog package
-import _ "github.com/atomix/dazl/zerolog"
+//import _ "github.com/atomix/dazl/zerolog"
 
 var log = dazl.GetPackageLogger()
 
