@@ -9,10 +9,17 @@ import (
 	"github.com/atomix/dazl"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
+	"strings"
 	"testing"
 )
 
 func TestWriter(t *testing.T) {
+	zerolog.MessageFieldName = "message"
+	zerolog.LevelFieldName = "level"
+	zerolog.LevelFieldMarshalFunc = func(l zerolog.Level) string {
+		return strings.ToLower(l.String())
+	}
+
 	buf := &bytes.Buffer{}
 	var writer dazl.Writer = &Writer{
 		logger: zerolog.New(buf),
