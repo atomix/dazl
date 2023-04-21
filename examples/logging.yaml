@@ -3,22 +3,45 @@
 # SPDX-License-Identifier: Apache-2.0
 
 encoders:
+  console:
+    fields:
+      - message
+      - name
+      - level:
+          format: uppercase
+      - timestamp:
+          format: ISO8601
+      - caller #:
+      #format: short
+      #- stacktrace
   json:
     fields:
       - message:
           key: message
+      - name:
+          key: logger
       - level:
-          format: uppercase
-      - caller:
-          format: short
+          key: level
+          format: lowercase
       - timestamp:
-          format: iso8601
+          key: time
+          format: ISO8601
+      - caller:
+          key: caller
+          format: short
+      #- stacktrace:
+      #    key: trace
 
 writers:
   stdout:
+    encoder: console
+  file:
+    path: ./example.log
     encoder: json
 
 rootLogger:
-  level: info
+  level: debug
   outputs:
-    - stdout
+    - stdout:
+        level: info
+    - file
